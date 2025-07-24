@@ -1,0 +1,88 @@
+import { PageContentT } from "@/types/page";
+import React from "react";
+
+export const usePageContentFetch = (pageId: string) => {
+  const [pageContent, setPageContent] = React.useState<PageContentT | null>(
+    null
+  );
+  const [loading, setLoading] = React.useState<boolean>(true);
+  const [error, setError] = React.useState<string | null>(null);
+
+  React.useEffect(() => {
+    // TODO: add abort controller to cancel fetch on unmount
+    // const abortController = new AbortController();
+    // const { signal } = abortController;
+
+    const fetchPageContent = async () => {
+      try {
+        // TODO: Simulate fetching page content from an API or database
+        // Replace this with actual fetch logic
+        const data = {
+          id: pageId,
+          title: "Sample Page Title",
+          blockList: [
+            {
+              id: "heading1-1",
+              type: "heading1",
+              text: "Sample 1 Heading",
+            },
+            {
+              id: "heading2-1",
+              type: "heading2",
+              text: "Sample 2 Heading",
+            },
+            {
+              id: "heading3-1",
+              type: "heading3",
+              text: "Sample 3 Heading",
+            },
+            {
+              id: "paragraph-2",
+              type: "paragraph",
+              text: 'uma String <span style="font-weight:bold;" data-token-index="1">qualquer que será </span><span style="font-weight:bold;font-style:italic;" data-token-index="2">formatado no</span><span style="font-style:italic;" data-token-index="3"> meu app</span> notion <span style="font-style:italic;" data-token-index="5">clone usando a tag &lt;span&gt;&nbsp;</span><span style="font-weight:bold;font-style:italic;" data-token-index="6">adicional</span>',
+              // text: "uma String &;/B#start/qualquer que será /B#end/&;&;/B#start/&;/I#start/formatado no/I#end/&;/B#end/&;&;/I#start/ meu app/I#end/&; notion &;/I#start/clone/I#end/&; &;/B#start/&;/I#start/adicional/I#end/&;/B#end/&;",
+            },
+            {
+              id: "paragraph-3",
+              type: "paragraph",
+              text: "This is a sample paragraph content. ",
+            },
+            {
+              id: "bulletlistitem-1",
+              type: "bulletlistitem",
+              text: "Sample List Item 1",
+            },
+            {
+              id: "checklistitem-1",
+              type: "checklistitem",
+              text: "Sample Check List Item 1",
+              checked: true,
+            },
+            {
+              id: "bulletlistitem-2",
+              type: "bulletlistitem",
+              text: "Sample List Item 2",
+            },
+            {
+              id: "bulletlistitem-3",
+              type: "bulletlistitem",
+              text: "Sample List Item 3",
+            },
+          ],
+        } as PageContentT;
+
+        setPageContent(data);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Unknown error");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchPageContent();
+
+    // return () => abortController.abort();
+  }, [pageId]);
+
+  return { pageContent, loading, error };
+};
