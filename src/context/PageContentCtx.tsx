@@ -67,7 +67,6 @@ export function PageContentProvider({
 }: {
   children: React.ReactNode;
 }) {
-  const pageContentRef = React.useRef<PageContentT | null>(null);
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const [pageContent, setPageContent] = React.useState<PageContentT | null>(
@@ -78,6 +77,43 @@ export function PageContentProvider({
   const [contentBlockList, setContentBlockList] = React.useState<
     PageContentT["blockList"]
   >([]);
+
+  function addFocus(id: string, at: "start" | "end" = "end") {
+    setTimeout(() => {
+      const element = document.getElementById(id);
+      const range = document.createRange();
+      const selection = window.getSelection();
+
+      if (!element || !selection) return;
+
+      const el = element.getElementsByClassName("block-input").item(0);
+      if (!el) return;
+
+      if (el.childNodes.length > 0) {
+        const aaa: Record<typeof at, { child: ChildNode; offset: number }> = {
+          start: {
+            child: el.firstChild!,
+            offset: 0,
+          },
+          end: {
+            child: el.lastChild!,
+            offset: el.firstChild!.textContent?.length || 0,
+          },
+        };
+        const { child, offset } = aaa[at];
+
+        range.setStart(child, offset);
+        range.collapse(true);
+
+        selection.removeAllRanges();
+        selection.addRange(range);
+
+        return;
+      }
+
+      (el as HTMLElement).focus();
+    }, 0);
+  }
 
   const updatePageContent = async () => {
     if (debounceTimeoutRef.current) {
@@ -196,7 +232,6 @@ export function PageContentProvider({
       indent,
     };
 
-    // type a = BlockT<BlockTypeT> & { [k: string]: unknown; }
     const newListItemBlockByType: Record<ListItemTypeT, BlockT> = {
       checklistitem: {
         ...baseData,
@@ -224,6 +259,7 @@ export function PageContentProvider({
     );
 
     setPageContent(() => temp);
+    addFocus(item.id, "start");
   };
 
   const removeBlock = (
@@ -256,8 +292,7 @@ export function PageContentProvider({
     setPageContent(() => temp);
 
     if (focusPrevBlock && index > 0)
-      setLastFocusedItemId(pageContentRef.current.blockList[index - 1].id);
-    updatePageContent();
+      addFocus(pageContent.blockList[index - 1].id);
   };
 
   const reorderBlockList = (index: number, toIndex: number) => {
@@ -279,7 +314,6 @@ export function PageContentProvider({
         contentTitle,
         pageContent,
         debounceTimeoutRef,
-        pageContentRef,
         setContentBlockList,
         addNewHeadingBlock,
         setContentTitle,
