@@ -3,7 +3,7 @@ import { BlockComponentProps } from "../../ContentListPage/EditableContentListPa
 import { twMerge } from "tailwind-merge";
 import { usePageContent } from "@/hooks/usePageContent";
 import React from "react";
-import { BlockWrapper } from "../BlockWrapper";
+import { BlockContentWrapper } from "../BlockContentWrapper";
 import { BlockInput } from "../BlockInput";
 
 type CheckListItemBlockProps = BlockComponentProps<CheckListItemBlockT>;
@@ -18,17 +18,31 @@ export function CheckListItemBlock({
   onChange,
 }: CheckListItemBlockProps) {
   const blockContainerRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLElement>(null);
 
-  const { addNewListItem, addNewParagraphBlock } = usePageContent();
+  const { pageContent, addNewListItemBlock, addNewParagraphBlock } =
+    usePageContent();
+
+  React.useEffect(() => {
+    if (inputRef.current && item.checked) {
+      inputRef.current.style.textDecorationLine = "line-through";
+      inputRef.current.style.color = "#8d8d8d";
+    }
+  }, []);
 
   const handleOnPressedEnterAtStart = () => {
-    addNewListItem(item.type, item.indent, index);
+    addNewListItemBlock(item.type, item.indent, index);
   };
   const handleOnPressedEnterAtEnd = () => {
-    addNewListItem(item.type, item.indent, index + 1);
+    console.log("handleOnPressedEnterAtEnd");
+    addNewListItemBlock(item.type, item.indent, index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
-    addNewParagraphBlock(index, item.text, true);
+    addNewParagraphBlock(
+      index,
+      pageContent!.blockList[index].text as string,
+      true
+    );
   };
 
   const handleInput = (innerHTML: string) => {
@@ -47,9 +61,9 @@ export function CheckListItemBlock({
         item.text.length > 0 ? "after:opacity-0" : ""
       )}
     >
-      <BlockWrapper blockIndex={index} className="flex">
+      <BlockContentWrapper blockIndex={index} className="flex">
         <div
-          className="py-1 size-fit pl-1 pr-[9px]"
+          className="py-[7px] size-fit pl-1 pr-[9px]"
           style={{
             marginLeft: `${item.indent ? item.indent * 20 : 0}px`,
           }}
@@ -59,6 +73,12 @@ export function CheckListItemBlock({
             type="checkbox"
             onChange={(e) => {
               const checked = e.currentTarget.checked;
+              if (inputRef.current) {
+                inputRef.current.style.textDecorationLine = checked
+                  ? "line-through"
+                  : "none";
+                inputRef.current.style.color = checked ? "#8d8d8d" : "";
+              }
               onChange({
                 checked,
               });
@@ -67,6 +87,7 @@ export function CheckListItemBlock({
         </div>
 
         <BlockInput
+          ref={inputRef}
           inputBlockIndex={index}
           text={item.text}
           className="py-[6px]"
@@ -78,7 +99,7 @@ export function CheckListItemBlock({
           onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
           onInput={handleInput}
         />
-      </BlockWrapper>
+      </BlockContentWrapper>
     </div>
   );
 }
