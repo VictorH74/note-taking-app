@@ -45,7 +45,7 @@ export const usePageContentFetch = (pageId: string) => {
             {
               id: "paragraph-3",
               type: "paragraph",
-              text: "This is a sample paragraph content. ",
+              text: "This is a sample paragraph content.",
             },
             {
               id: "bulletlistitem-1",

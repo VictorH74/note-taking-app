@@ -3,7 +3,7 @@ import sanitizeHtml from "sanitize-html";
 
 export const sanitizeText = (text: string) => {
   return sanitizeHtml(text, {
-    allowedTags: ["span"],
+    allowedTags: ["span", "br", "div"],
     allowedAttributes: {
       span: ["style", "class", "id"],
     },

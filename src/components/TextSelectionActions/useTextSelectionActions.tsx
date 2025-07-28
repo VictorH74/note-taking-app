@@ -13,8 +13,6 @@ type ActionBtnDataListT = {
 
 // TODO: depois da execuçãp de qualquer função de format., verificar na elemento pai todos as childrens para mesclar elementos com o mesmo estilo de format.
 export const useTextSelectionActions = () => {
-  // const formattingActionBtnRefList = React.useRef(FORMATTING_NAME_LIST.map(() => React.createRef()))
-  // const formattingActionBtnRefs = React.useRef<HTMLButtonElement[]>([]);
   const {
     TextSelectionActionsRef,
     closeTextSelectionAction,
@@ -24,7 +22,7 @@ export const useTextSelectionActions = () => {
     onChangeBlockIndexRef,
     formattingActionBtnRefs,
   } = useTextSelection();
-  const { pageContentRef, changePageContentRefListItem } = usePageContent();
+  const { pageContent, changePageContentBlockListItem } = usePageContent();
 
   const actionBtnDataList = React.useMemo<ActionBtnDataListT[]>(
     () => [
@@ -89,7 +87,7 @@ export const useTextSelectionActions = () => {
         },
       },
     ],
-    []
+    [pageContent]
   );
 
   // TODO: when totally usable, check result in DOOM
@@ -132,13 +130,13 @@ export const useTextSelectionActions = () => {
     setupSelectedStyle();
     mergeElements();
 
-    // update 'pageContentRef' with changed item
+    // update 'pageContent' with changed item
     if (onChangeBlockIndexRef.current) {
-      const blockId =
-        pageContentRef.current?.blockList[onChangeBlockIndexRef.current].id;
+      const blockId = pageContent?.blockList[onChangeBlockIndexRef.current].id;
+      console.log(pageContent);
       const blockEl = document.getElementById(blockId as string);
 
-      changePageContentRefListItem(onChangeBlockIndexRef.current, {
+      changePageContentBlockListItem(onChangeBlockIndexRef.current, {
         text: blockEl!.innerHTML,
       });
     }

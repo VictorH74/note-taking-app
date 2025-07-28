@@ -15,7 +15,7 @@ export function ReadOnlyContentListPage(props: ReadOnlyContentListPageProps) {
           Content List Page: {pageContent?.title}
         </h1>
         <p className="text-lg">
-          This is a placeholder for content. {pageContent?.itemList.length}{" "}
+          This is a placeholder for content. {pageContent?.blockList.length}{" "}
           items
         </p>
       </main>

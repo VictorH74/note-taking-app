@@ -4,7 +4,7 @@ import { BlockComponentProps } from "../../ContentListPage/EditableContentListPa
 import React from "react";
 import { usePageContent } from "@/hooks/usePageContent";
 import { twMerge } from "tailwind-merge";
-import { BlockWrapper } from "../BlockWrapper";
+import { BlockContentWrapper } from "../BlockContentWrapper";
 import { BlockInput } from "../BlockInput";
 
 type ParagraphContentProps = BlockComponentProps<ParagraphBlockT>;
@@ -25,6 +25,7 @@ export function ParagraphBlock({
     addNewParagraphBlock(index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
+    console.log("ParagraphBlock >> handleOnPressedBackspaceAtStart()");
     removeBlock(index, true, item.text);
   };
 
@@ -58,7 +59,7 @@ export function ParagraphBlock({
       id={item.id}
       className={twMerge("relative block-item", placeholderClassName)}
     >
-      <BlockWrapper blockIndex={index}>
+      <BlockContentWrapper blockIndex={index}>
         <BlockInput
           inputBlockIndex={index}
           className="py-1"
@@ -71,7 +72,7 @@ export function ParagraphBlock({
           onPressedEnterAtEnd={handleOnPressedEnterAtEnd}
           onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
         />
-      </BlockWrapper>
+      </BlockContentWrapper>
     </div>
   );
 }

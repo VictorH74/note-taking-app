@@ -36,3 +36,11 @@ body {
     }
   }
 }
+
+.block-wrapper {
+  &:hover {
+    & .block-wrapper-actions {
+      opacity: 100;
+    }
+  }
+}

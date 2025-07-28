@@ -17,7 +17,6 @@ import React from "react";
 export type BlockListType = PageContentT["blockList"][number];
 
 interface ContentListCtxProps {
-  pageContentRef: React.RefObject<PageContentT | null>;
   debounceTimeoutRef: React.RefObject<NodeJS.Timeout | null>;
   contentTitle: string;
   setContentTitle: React.Dispatch<React.SetStateAction<string>>;
@@ -25,17 +24,25 @@ interface ContentListCtxProps {
   setContentBlockList: React.Dispatch<
     React.SetStateAction<PageContentT["blockList"]>
   >;
-  changePageContentRefListItem(
+  setPageContent: (value: React.SetStateAction<PageContentT | null>) => void;
+
+  changePageContentTitle: (text: string) => void;
+  changePageContentBlockListItem(
     index: number,
     itemChangedData: Record<string, unknown>
   ): void;
-  updatePageContent(): Promise<void>;
+  // applyPageContentChanges: () => void;
+
   addNewParagraphBlock(
     index?: number,
     initialText?: string,
     replace?: boolean
   ): void;
-  addNewListItem(type: ListItemTypeT, indent?: number, newIndex?: number): void;
+  addNewListItemBlock(
+    type: ListItemTypeT,
+    indent?: number,
+    newIndex?: number
+  ): void;
   addNewHeadingBlock: (type: HeadingItemTypeT, newIndex?: number) => void;
   addHeadingBlock(
     type: "heading1" | "heading2" | "heading3",
@@ -47,6 +54,8 @@ interface ContentListCtxProps {
     toConcatText?: string
   ): void;
   reorderBlockList: (index: number, toIndex: number) => void;
+
+  pageContent: PageContentT | null;
 }
 
 export const PageContentCtx = React.createContext<ContentListCtxProps | null>(
@@ -61,90 +70,60 @@ export function PageContentProvider({
   const pageContentRef = React.useRef<PageContentT | null>(null);
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
+  const [pageContent, setPageContent] = React.useState<PageContentT | null>(
+    null
+  );
+
   const [contentTitle, setContentTitle] = React.useState<string>("");
   const [contentBlockList, setContentBlockList] = React.useState<
     PageContentT["blockList"]
   >([]);
-  const [lastFocusedItemId, setLastFocusedItemId] = React.useState<
-    BlockT["id"] | null
-  >(null);
 
-  const addItemFocus = React.useMemo<
-    Record<BlockTypeT, (itemElement: HTMLElement) => void>
-  >(
-    () => ({
-      paragraph: (el) => {
-        const element = el.getElementsByClassName("block-input").item(0);
-        if (!element) return;
-        (element as HTMLElement).focus();
-      },
-      checklistitem: (el) => {
-        const element = el.getElementsByClassName("block-input").item(0);
-        if (!element) return;
-        (element as HTMLElement).focus();
-      },
-      bulletlistitem: (el) => {
-        const element = el.getElementsByClassName("block-input").item(0);
-        if (!element) return;
-        // TODO: fix this attempt to focus last of element content
-        (element as HTMLElement).focus();
-
-        // const range = document.createRange();
-        // const selection = window.getSelection();
-
-        // range.setStart(element.childNodes[element.childNodes.length - 1], 4);
-        // range.collapse(false);
-
-        // selection?.removeAllRanges();
-        // selection?.addRange(range);
-      },
-      code: () => {},
-      heading1: (el) => {
-        const element = el.getElementsByClassName("block-input").item(0);
-        if (!element) return;
-        (element as HTMLElement).focus();
-      },
-      heading2: (el) => {
-        const element = el.getElementsByClassName("block-input").item(0);
-        if (!element) return;
-        (element as HTMLElement).focus();
-      },
-      heading3: (el) => {
-        const element = el.getElementsByClassName("block-input").item(0);
-        if (!element) return;
-        (element as HTMLElement).focus();
-      },
-      table: () => {},
-    }),
-    []
-  );
-
-  React.useEffect(() => {
-    if (!pageContentRef.current) return;
-
-    pageContentRef.current.blockList = contentBlockList;
-  }, [contentBlockList]);
-
-  React.useEffect(() => {
-    if (!pageContentRef.current) return;
-
-    pageContentRef.current.title = contentTitle;
-  }, [contentTitle]);
-
-  React.useEffect(() => {
-    if (!lastFocusedItemId) return;
-    console.log(lastFocusedItemId);
-    const [id] = lastFocusedItemId.split("-");
-
-    const itemElement = document.getElementById(lastFocusedItemId);
-    if (itemElement) {
-      addItemFocus[id as BlockTypeT](itemElement);
-      setLastFocusedItemId(null);
+  const updatePageContent = async () => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
     }
-  }, [lastFocusedItemId]);
+
+    debounceTimeoutRef.current = setTimeout(() => {
+      console.log("Updating content list:", pageContent);
+      // Here you would typically make an API call to update the content list
+      // For example:
+      // await api.updatePageContent(props.pageContentId, {
+      //   itemList: contentBlockList,
+      // });
+    }, 1000 * 2);
+  };
+
+  React.useEffect(() => {
+    if (!pageContent) return;
+
+    updatePageContent();
+  }, [pageContent]);
+
+  const changePageContentTitle = (text: string) => {
+    if (!pageContent) return;
+
+    pageContent.title = text;
+    updatePageContent();
+  };
+
+  const changePageContentBlockListItem = (
+    index: number,
+    itemChangedData: Record<string, unknown>
+  ) => {
+    if (!pageContent) return;
+
+    const newItem = pageContent.blockList[index];
+
+    pageContent.blockList[index] = {
+      ...newItem,
+      ...itemChangedData,
+    } as BlockListType;
+    updatePageContent();
+  };
 
   const addHeadingBlock = (type: HeadingItemTypeT, newIndex?: number) => {
-    if (!pageContentRef.current) return;
+    if (!pageContent) return;
 
     const baseData = {
       id: `${type}-${Date.now()}`,
@@ -166,7 +145,7 @@ export function PageContentProvider({
     initialText?: string,
     replace?: boolean
   ) => {
-    if (!pageContentRef.current) return;
+    if (!pageContent) return;
 
     const newItem: ParagraphBlockT = {
       id: `paragraph-${Date.now()}`,
@@ -178,7 +157,7 @@ export function PageContentProvider({
   };
 
   const addNewHeadingBlock = (type: HeadingItemTypeT, newIndex?: number) => {
-    if (!pageContentRef.current) return;
+    if (!pageContent) return;
 
     const baseData = {
       text: "",
@@ -203,12 +182,12 @@ export function PageContentProvider({
     addNewBlock(newHeadingBlockByType[type], newIndex);
   };
 
-  function addNewListItem(
+  function addNewListItemBlock(
     type: ListItemTypeT,
     indent?: number,
     newIndex?: number
   ) {
-    if (!pageContentRef.current) return;
+    if (!pageContent) return;
 
     const baseData = {
       id: `${type}-${Date.now()}`,
@@ -234,33 +213,17 @@ export function PageContentProvider({
   }
 
   const addNewBlock = (item: BlockT, index?: number, replace?: boolean) => {
-    if (!pageContentRef.current) return;
+    if (!pageContent) return;
 
-    pageContentRef.current.blockList.splice(
-      index || pageContentRef.current.blockList.length,
+    const temp = { ...pageContent };
+
+    temp.blockList.splice(
+      index != undefined ? index : temp.blockList.length,
       replace ? 1 : 0,
       item as BlockT<BlockTypeT> & { [k: string]: unknown }
     );
 
-    setContentBlockList(pageContentRef.current.blockList);
-    setLastFocusedItemId(item.id);
-    updatePageContent();
-  };
-
-  const changePageContentRefListItem = (
-    index: number,
-    itemChangedData: Record<string, unknown>
-  ) => {
-    if (!pageContentRef.current) return;
-
-    const newItem = pageContentRef.current.blockList[index];
-
-    pageContentRef.current.blockList[index] = {
-      ...newItem,
-      ...itemChangedData,
-    } as BlockListType;
-
-    updatePageContent();
+    setPageContent(() => temp);
   };
 
   const removeBlock = (
@@ -268,12 +231,14 @@ export function PageContentProvider({
     focusPrevBlock?: boolean,
     toConcatText?: string
   ) => {
-    if (!pageContentRef.current) return;
+    if (!pageContent) return;
 
-    pageContentRef.current.blockList.splice(index, 1);
+    const temp = { ...pageContent };
+
+    temp.blockList.splice(index, 1);
 
     if (toConcatText && index > 0) {
-      const block = pageContentRef.current.blockList[index - 1];
+      const block = temp.blockList[index - 1];
       if (
         [
           "checklistitem",
@@ -288,36 +253,23 @@ export function PageContentProvider({
       }
     }
 
-    setContentBlockList(pageContentRef.current.blockList);
+    setPageContent(() => temp);
+
     if (focusPrevBlock && index > 0)
       setLastFocusedItemId(pageContentRef.current.blockList[index - 1].id);
     updatePageContent();
   };
 
   const reorderBlockList = (index: number, toIndex: number) => {
-    if (!pageContentRef.current) return;
+    if (!pageContent) return;
 
-    const block = pageContentRef.current.blockList[index];
+    const block = pageContent.blockList[index];
 
-    pageContentRef.current.blockList.splice(index, 1);
+    pageContent.blockList.splice(index, 1);
 
-    // addNewBlock(block, toIndex);
-    addNewBlock(block, index < toIndex ? toIndex - 1 : toIndex);
-  };
+    const finalToIndex = index < toIndex && toIndex > 0 ? toIndex - 1 : toIndex;
 
-  const updatePageContent = async () => {
-    if (debounceTimeoutRef.current) {
-      clearTimeout(debounceTimeoutRef.current);
-    }
-
-    debounceTimeoutRef.current = setTimeout(() => {
-      console.log("Updating content list:", pageContentRef.current?.blockList);
-      // Here you would typically make an API call to update the content list
-      // For example:
-      // await api.updatePageContent(props.pageContentId, {
-      //   itemList: contentBlockList,
-      // });
-    }, 1000 * 2);
+    addNewBlock(block, finalToIndex);
   };
 
   return (
@@ -325,15 +277,17 @@ export function PageContentProvider({
       value={{
         contentBlockList,
         contentTitle,
+        pageContent,
         debounceTimeoutRef,
         pageContentRef,
         setContentBlockList,
         addNewHeadingBlock,
         setContentTitle,
         addNewParagraphBlock,
-        changePageContentRefListItem,
-        updatePageContent,
-        addNewListItem,
+        changePageContentTitle,
+        changePageContentBlockListItem,
+        setPageContent,
+        addNewListItemBlock,
         addHeadingBlock,
         removeBlock,
         reorderBlockList,

@@ -93,7 +93,6 @@ export const generateItemComponent: Record<
       onChange={onChange}
     />
   ),
-  // TODO: create own component
   checklistitem: (item, index, onChange) => (
     <CheckListItemBlock
       key={item.id}
@@ -115,35 +114,37 @@ export const generateItemComponent: Record<
 export const useEditableContentList = (
   props: ContentListPageEditableChildrenProps
 ) => {
-  const { pageContent } = usePageContentFetch(props.pageContentId);
+  const { pageContent: retrivedPageContent } = usePageContentFetch(
+    props.pageContentId
+  );
   const {
-    setContentTitle,
-    setContentBlockList,
-    pageContentRef,
-    changePageContentRefListItem,
-    contentTitle,
-    contentBlockList,
+    pageContent,
+    setPageContent,
+    changePageContentTitle,
+    changePageContentBlockListItem,
   } = usePageContent();
 
   React.useEffect(() => {
-    if (!pageContent) return;
+    if (!retrivedPageContent) return;
 
-    console.log("Page content fetched:", pageContent);
+    console.log("Page content fetched:", retrivedPageContent);
 
-    setContentTitle(pageContent.title);
-    setContentBlockList(pageContent.blockList);
-    pageContentRef.current = pageContent;
-  }, [pageContent]);
+    setPageContent(retrivedPageContent);
+  }, [retrivedPageContent]);
 
   const makeHandleItemChange =
     (index: number) => (itemChangedData: Record<string, unknown>) => {
-      changePageContentRefListItem(index, itemChangedData);
+      changePageContentBlockListItem(index, itemChangedData);
     };
 
+  const handleContentTitleChange = (e: React.FormEvent<HTMLHeadingElement>) => {
+    console.log("handleContentTitleChange", e.currentTarget.innerText);
+    changePageContentTitle(e.currentTarget.innerText);
+  };
+
   return {
-    contentTitle,
-    contentBlockList,
-    setContentTitle,
+    pageContent,
     makeHandleItemChange,
+    handleContentTitleChange,
   };
 };

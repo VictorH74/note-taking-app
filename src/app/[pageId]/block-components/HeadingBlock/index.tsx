@@ -2,7 +2,7 @@ import { BlockT, HeadingItemTypeT } from "@/types/page";
 import { BlockComponentProps } from "../../ContentListPage/EditableContentListPage/useEditableContentList";
 import { twMerge } from "tailwind-merge";
 import { usePageContent } from "@/hooks/usePageContent";
-import { BlockWrapper } from "../BlockWrapper";
+import { BlockContentWrapper } from "../BlockContentWrapper";
 import React from "react";
 import { BlockInput } from "../BlockInput";
 
@@ -80,7 +80,7 @@ export function HeadingBlock(props: HeadingContentProps) {
       }}
     >
       <div className="relative">
-        <BlockWrapper blockIndex={props.index}>
+        <BlockContentWrapper blockIndex={props.index}>
           <BlockInput
             ref={inputRef}
             className={twMerge("font-bold", headingItemData.className)}
@@ -92,7 +92,7 @@ export function HeadingBlock(props: HeadingContentProps) {
             onPressedEnterAtEnd={handleOnPressedEnterAtEnd}
             onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
           />
-        </BlockWrapper>
+        </BlockContentWrapper>
       </div>
     </div>
   );

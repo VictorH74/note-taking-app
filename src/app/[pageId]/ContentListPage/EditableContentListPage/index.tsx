@@ -9,8 +9,9 @@ import {
   generateItemComponent,
   useEditableContentList,
 } from "./useEditableContentList";
-import { TextSelectionProvider } from "@/context/TextSelectionCtx";
-import { TextSelectionActions } from "@/components/TextSelectionActions";
+import { sanitizeText } from "@/utils/functions";
+import { TextSelectionContainer } from "../components/TextSelectionContainer";
+import { BlockActionsProvider } from "../components/BlockActionsProvider";
 
 // TODO: formart content when was copied from the editor
 
@@ -28,18 +29,26 @@ export function EditableContentListPage(
             fullScreen ? "" : "max-w-3xl"
           )}
         >
-          <TextSelectionProvider>
-            <h1 className="text-4xl font-extrabold">{hook.contentTitle}</h1>
+          <TextSelectionContainer>
+            <h1
+              contentEditable
+              className="text-4xl font-extrabold outline-none"
+              onInput={hook.handleContentTitleChange}
+              dangerouslySetInnerHTML={{
+                __html: sanitizeText(hook.pageContent?.title || ""),
+              }}
+            ></h1>
 
-            {hook.contentBlockList.map((item, index) =>
-              generateItemComponent[item.type](
-                item,
-                index,
-                hook.makeHandleItemChange(index)
-              )
-            )}
-            <TextSelectionActions />
-          </TextSelectionProvider>
+            <BlockActionsProvider>
+              {hook.pageContent?.blockList.map((item, index) =>
+                generateItemComponent[item.type](
+                  item,
+                  index,
+                  hook.makeHandleItemChange(index)
+                )
+              )}
+            </BlockActionsProvider>
+          </TextSelectionContainer>
         </main>
       </div>
     </div>
