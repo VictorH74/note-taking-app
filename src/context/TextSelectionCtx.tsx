@@ -12,9 +12,11 @@ interface TextSelectionCtxProps {
       left: number;
       top: number;
     },
-    onChangeBlockIndex: number
+    onChangeBlockIndex: number,
+    inputId: string
   ) => void;
   onChangeBlockIndexRef: React.RefObject<number | null>;
+  inputIdRef: React.RefObject<string | null>;
   closeTextSelectionAction: () => void;
   commonFormattingRef: React.RefObject<Set<FormattingT> | null>;
   selectedNodeFormattingStyleListRef: React.RefObject<string[] | null>;
@@ -33,6 +35,7 @@ export function TextSelectionProvider({
   children: React.ReactNode;
 }) {
   const onChangeBlockIndexRef = React.useRef<number | null>(null);
+  const inputIdRef = React.useRef<string | null>(null);
   const TextSelectionActionsRef = React.useRef<HTMLDivElement>(null);
   const commonFormattingRef = React.useRef<Set<FormattingT>>(null);
   const selectedNodeFormattingStyleListRef = React.useRef<Array<string>>(null);
@@ -50,10 +53,12 @@ export function TextSelectionProvider({
       left: number;
       top: number;
     },
-    onChangeBlockIndex: number
+    onChangeBlockIndex: number,
+    inputId: string
   ) => {
     if (!TextSelectionActionsRef.current) return;
     onChangeBlockIndexRef.current = onChangeBlockIndex;
+    inputIdRef.current = inputId;
 
     const TextSelectionActions = TextSelectionActionsRef.current;
     const decreaseLeftNumber = 30;
@@ -179,6 +184,7 @@ export function TextSelectionProvider({
     <TextSelectionCtx.Provider
       value={{
         formattingActionBtnRefs,
+        inputIdRef,
         TextSelectionActionsRef,
         showTextSelectionAction,
         onChangeBlockIndexRef,

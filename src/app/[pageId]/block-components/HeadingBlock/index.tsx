@@ -5,6 +5,7 @@ import { usePageContent } from "@/hooks/usePageContent";
 import { BlockContentWrapper } from "../BlockContentWrapper";
 import React from "react";
 import { BlockInput } from "../BlockInput";
+import { applyFocus } from "@/utils/functions";
 
 type HeadingContentProps = {
   headingBlockType: HeadingItemTypeT;
@@ -74,12 +75,10 @@ export function HeadingBlock(props: HeadingContentProps) {
         props.item.text.length > 0 ? "after:opacity-0" : ""
       )}
       onClick={() => {
-        const heading = inputRef.current;
-
-        if (heading) heading.focus();
+        applyFocus(props.item.id);
       }}
     >
-      <div className="relative">
+      <div className="relative" onClick={(e) => e.stopPropagation()}>
         <BlockContentWrapper blockIndex={props.index}>
           <BlockInput
             ref={inputRef}

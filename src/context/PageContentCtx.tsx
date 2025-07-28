@@ -12,6 +12,7 @@ import {
   PageContentT,
   ParagraphBlockT,
 } from "@/types/page";
+import { applyFocus } from "@/utils/functions";
 import React from "react";
 
 export type BlockListType = PageContentT["blockList"][number];
@@ -78,43 +79,6 @@ export function PageContentProvider({
     PageContentT["blockList"]
   >([]);
 
-  function addFocus(id: string, at: "start" | "end" = "end") {
-    setTimeout(() => {
-      const element = document.getElementById(id);
-      const range = document.createRange();
-      const selection = window.getSelection();
-
-      if (!element || !selection) return;
-
-      const el = element.getElementsByClassName("block-input").item(0);
-      if (!el) return;
-
-      if (el.childNodes.length > 0) {
-        const aaa: Record<typeof at, { child: ChildNode; offset: number }> = {
-          start: {
-            child: el.firstChild!,
-            offset: 0,
-          },
-          end: {
-            child: el.lastChild!,
-            offset: el.firstChild!.textContent?.length || 0,
-          },
-        };
-        const { child, offset } = aaa[at];
-
-        range.setStart(child, offset);
-        range.collapse(true);
-
-        selection.removeAllRanges();
-        selection.addRange(range);
-
-        return;
-      }
-
-      (el as HTMLElement).focus();
-    }, 0);
-  }
-
   const updatePageContent = async () => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
@@ -178,14 +142,14 @@ export function PageContentProvider({
 
   const addNewParagraphBlock = (
     newIndex?: number,
-    initialText?: string,
+    initialText: string = "",
     replace?: boolean
   ) => {
     if (!pageContent) return;
 
     const newItem: ParagraphBlockT = {
       id: `paragraph-${Date.now()}`,
-      text: initialText || "",
+      text: initialText,
       type: "paragraph",
     };
 
@@ -259,7 +223,7 @@ export function PageContentProvider({
     );
 
     setPageContent(() => temp);
-    addFocus(item.id, "start");
+    applyFocus(item.id, "start");
   };
 
   const removeBlock = (
@@ -292,7 +256,7 @@ export function PageContentProvider({
     setPageContent(() => temp);
 
     if (focusPrevBlock && index > 0)
-      addFocus(pageContent.blockList[index - 1].id);
+      applyFocus(pageContent.blockList[index - 1].id);
   };
 
   const reorderBlockList = (index: number, toIndex: number) => {

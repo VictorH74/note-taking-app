@@ -29,6 +29,10 @@ export function BulletListItemBlock({
     addNewListItemBlock(item.type, item.indent, index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
+    console.log(
+      "BulletListItemBlock >> handleOnPressedBackspaceAtStart",
+      pageContent!.blockList[index].text
+    );
     addNewParagraphBlock(
       index,
       pageContent!.blockList[index].text as string,

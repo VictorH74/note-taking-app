@@ -33,6 +33,48 @@ export const compareStr = (strA: string, strB: string) => {
   return true;
 };
 
+export const applyFocus = (id: string, at: "start" | "end" = "end") => {
+  setTimeout(() => {
+    const element = document.getElementById(id);
+    const range = document.createRange();
+    const selection = window.getSelection();
+
+    if (!element || !selection) return;
+
+    const el = element.getElementsByClassName("block-input").item(0);
+    if (!el) return;
+
+    el.childNodes.forEach((node) => console.log(node));
+
+    if (el.childNodes.length > 0) {
+      const caretPosData: Record<
+        typeof at,
+        { child: ChildNode; offset: number }
+      > = {
+        start: {
+          child: el.firstChild!,
+          offset: 0,
+        },
+        end: {
+          child: el.lastChild!,
+          offset: el.lastChild!.textContent?.length || 0,
+        },
+      };
+      const { child, offset } = caretPosData[at];
+
+      range.setStart(child, offset);
+      range.collapse(true);
+
+      selection.removeAllRanges();
+      selection.addRange(range);
+
+      return;
+    }
+
+    (el as HTMLElement).focus();
+  }, 0);
+};
+
 export const formatText = (text: string): string => {
   const boldStartRegex = new RegExp("/B#start/");
   const boldEndRegex = new RegExp("/B#end/");

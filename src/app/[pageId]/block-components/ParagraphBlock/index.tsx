@@ -19,14 +19,14 @@ export function ParagraphBlock({
 }: ParagraphContentProps) {
   const blockContainerRef = React.useRef<HTMLDivElement>(null);
 
-  const { addNewParagraphBlock, removeBlock } = usePageContent();
+  const { pageContent, addNewParagraphBlock, removeBlock } = usePageContent();
 
   const handleOnPressedEnterAtEnd = () => {
     addNewParagraphBlock(index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
     console.log("ParagraphBlock >> handleOnPressedBackspaceAtStart()");
-    removeBlock(index, true, item.text);
+    removeBlock(index, true, pageContent!.blockList[index].text as string);
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLElement>) => {

@@ -27,6 +27,7 @@ const placeholderClassName =
   "after:content-[attr(data-placeholder)] after:absolute after:top-0 after:left-0 after:text-gray-400 after:pointer-events-none after:opacity-0";
 
 export function BlockInput(props: BlockInputProps) {
+  const id = React.useId();
   const inputRef = React.useRef<HTMLElement>(null);
   const caretIndexRef = React.useRef<number>(null);
   const { addNewParagraphBlock } = usePageContent();
@@ -176,7 +177,7 @@ export function BlockInput(props: BlockInputProps) {
     const range = sel.getRangeAt(0);
     const { left, top } = range.getBoundingClientRect();
 
-    showTextSelectionAction({ left, top }, props.inputBlockIndex);
+    showTextSelectionAction({ left, top }, props.inputBlockIndex, id);
   };
 
   const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
@@ -208,6 +209,7 @@ export function BlockInput(props: BlockInputProps) {
     ref: props.ref || inputRef,
     className: twMerge(
       "h-fit w-full outline-none block-input",
+      id,
       props.className
     ),
     contentEditable: true,

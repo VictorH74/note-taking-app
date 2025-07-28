@@ -20,6 +20,7 @@ export const useTextSelectionActions = () => {
     commonFormattingRef,
     setupSelectedStyle,
     onChangeBlockIndexRef,
+    inputIdRef,
     formattingActionBtnRefs,
   } = useTextSelection();
   const { pageContent, changePageContentBlockListItem } = usePageContent();
@@ -131,15 +132,17 @@ export const useTextSelectionActions = () => {
     mergeElements();
 
     // update 'pageContent' with changed item
-    if (onChangeBlockIndexRef.current) {
-      const blockId = pageContent?.blockList[onChangeBlockIndexRef.current].id;
-      console.log(pageContent);
-      const blockEl = document.getElementById(blockId as string);
+    const blockId = pageContent?.blockList[onChangeBlockIndexRef.current!].id;
+    const blockEl = document
+      .getElementById(blockId as string)
+      ?.getElementsByClassName(inputIdRef.current!)
+      .item(0);
 
-      changePageContentBlockListItem(onChangeBlockIndexRef.current, {
-        text: blockEl!.innerHTML,
-      });
-    }
+    console.log("KKKKK", blockEl);
+
+    changePageContentBlockListItem(onChangeBlockIndexRef.current!, {
+      text: blockEl!.innerHTML,
+    });
   };
 
   // TODO: may be better if called when 'closeTextSelectionAction' is called
