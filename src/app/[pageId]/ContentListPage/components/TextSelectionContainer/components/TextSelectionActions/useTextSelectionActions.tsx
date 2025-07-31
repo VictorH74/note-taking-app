@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { usePageContent } from "@/hooks/usePageContent";
 import { useTextSelection } from "@/hooks/useTextSelection";
 import { PositionT } from "@/types/global";

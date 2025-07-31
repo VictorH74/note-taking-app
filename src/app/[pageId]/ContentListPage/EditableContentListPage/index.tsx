@@ -33,7 +33,7 @@ export function EditableContentListPage(
               className="text-4xl font-extrabold outline-none"
               onInput={hook.handleContentTitleChange}
               dangerouslySetInnerHTML={{
-                __html: sanitizeText(hook.pageContent?.title || ""),
+                __html: sanitizeText(props.pageContentId || ""),
               }}
             ></h1>
 

@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { CheckListItemBlockT } from "@/types/page";
 import { BlockComponentProps } from "../../ContentListPage/EditableContentListPage/useEditableContentList";
 import { twMerge } from "tailwind-merge";

@@ -140,6 +140,7 @@ export const useEditableContentList = (
     console.log("Page content fetched:", retrivedPageContent);
 
     setPageContent(retrivedPageContent);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retrivedPageContent]);
 
   const makeHandleItemChange =

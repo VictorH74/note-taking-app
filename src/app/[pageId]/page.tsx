@@ -4,7 +4,7 @@ import { ReadOnlyContentListPage } from "./ContentListPage/ReadOnlyContentListPa
 import { PageContentProvider } from "@/context/PageContentCtx";
 
 export default async function Page({ params }: { params: { pageId: string } }) {
-  const { pageId } = await params;
+  const { pageId } = params;
 
   // TODO: Fetch page content based on params.pageId
 
@@ -34,7 +34,7 @@ export default async function Page({ params }: { params: { pageId: string } }) {
   if (editor)
     return (
       <PageContentProvider>
-        <EditableContentListPage pageContentId={pageData.contentId} />
+        <EditableContentListPage pageContentId={pageData.id} />
       </PageContentProvider>
     );
 
