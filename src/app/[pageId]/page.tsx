@@ -3,8 +3,12 @@ import { EditableContentListPage } from "./ContentListPage/EditableContentListPa
 import { ReadOnlyContentListPage } from "./ContentListPage/ReadOnlyContentListPage";
 import { PageContentProvider } from "@/context/PageContentCtx";
 
-export default async function Page({ params }: { params: { pageId: string } }) {
-  const { pageId } = params;
+export default async function Page({
+  params,
+}: {
+  params: Promise<{ pageId: string }>;
+}) {
+  const { pageId } = await params;
 
   // TODO: Fetch page content based on params.pageId
 
