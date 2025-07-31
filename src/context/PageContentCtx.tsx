@@ -9,6 +9,7 @@ import {
   Heading3BlockT,
   HeadingItemTypeT,
   ListItemTypeT,
+  NumberedListItemBlockT,
   PageContentT,
   ParagraphBlockT,
 } from "@/types/page";
@@ -199,12 +200,13 @@ export function PageContentProvider({
     const newListItemBlockByType: Record<ListItemTypeT, BlockT> = {
       checklistitem: {
         ...baseData,
-        decoration: "check",
         checked: false,
       } as CheckListItemBlockT,
+      numberedlistitem: {
+        ...baseData,
+      } as NumberedListItemBlockT,
       bulletlistitem: {
         ...baseData,
-        decoration: "bullet",
       } as BulletListItemBlockT,
     };
 

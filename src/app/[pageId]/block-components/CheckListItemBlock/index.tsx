@@ -11,7 +11,6 @@ type CheckListItemBlockProps = BlockComponentProps<CheckListItemBlockT>;
 const placeholderClassName =
   "after:content-['Check_list'] after:absolute after:top-1/2 after:left-[26px] after:-translate-y-1/2 after:text-gray-400 after:pointer-events-none";
 
-// TODO: implement feature to change check shape (e.g., box, circle)
 export function CheckListItemBlock({
   item,
   index,

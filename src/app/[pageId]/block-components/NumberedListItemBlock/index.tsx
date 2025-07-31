@@ -1,4 +1,4 @@
-import { BulletListItemBlockT } from "@/types/page";
+import { NumberedListItemBlockT } from "@/types/page";
 import { BlockComponentProps } from "../../ContentListPage/EditableContentListPage/useEditableContentList";
 import { twMerge } from "tailwind-merge";
 import { usePageContent } from "@/hooks/usePageContent";
@@ -6,16 +6,16 @@ import React from "react";
 import { BlockContentWrapper } from "../BlockContentWrapper";
 import { BlockInput } from "../BlockInput";
 
-type BulletListItemProps = BlockComponentProps<BulletListItemBlockT>;
+type NumberedListItemProps = BlockComponentProps<NumberedListItemBlockT>;
 
 const placeholderClassName =
-  "after:content-['List'] after:absolute after:top-1/2 after:left-[27px] after:-translate-y-1/2 after:text-gray-400 after:pointer-events-none";
+  "after:content-['Numbered_list'] after:absolute after:top-1/2 after:left-[27px] after:-translate-y-1/2 after:text-gray-400 after:pointer-events-none";
 
-export function BulletListItemBlock({
+export function NumberedListItemBlock({
   item,
   index,
   onChange,
-}: BulletListItemProps) {
+}: NumberedListItemProps) {
   const blockContainerRef = React.useRef<HTMLDivElement>(null);
 
   const { pageContent, addNewListItemBlock, addNewParagraphBlock } =
@@ -41,6 +41,16 @@ export function BulletListItemBlock({
     });
   };
 
+  const getNumber = (currentIndex: number, count: number = 0) => {
+    if (currentIndex == 0) return count + 1;
+
+    if (pageContent?.blockList[currentIndex - 1].type == "numberedlistitem") {
+      return getNumber(currentIndex - 1, count + 1);
+    }
+
+    return count + 1;
+  };
+
   return (
     <div
       ref={blockContainerRef}
@@ -52,27 +62,23 @@ export function BulletListItemBlock({
       )}
     >
       <BlockContentWrapper blockIndex={index} className="flex">
-        <div
-          className="py-[13px] size-fit pl-2 pr-3"
-          style={{
-            marginLeft: `${item.indent ? item.indent * 20 : 0}px`,
-          }}
-        >
-          <div className="size-[7px] bg-white rounded-full" />
+        <div className="relative w-full ml-[25px]">
+          <span className=" absolute top-0 right-[calc(100%+6px)] py-1 font-medium">
+            {getNumber(index)}.
+          </span>
+          <BlockInput
+            text={item.text}
+            inputBlockIndex={index}
+            className="py-[6px]"
+            replaceBlock
+            hasParentWithCssAfterProp
+            cssAfterPropContainer={blockContainerRef}
+            onPressedEnterAtStart={handleOnPressedEnterAtStart}
+            onPressedEnterAtEnd={handleOnPressedEnterAtEnd}
+            onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
+            onInput={handleInput}
+          />
         </div>
-
-        <BlockInput
-          text={item.text}
-          inputBlockIndex={index}
-          className="py-[6px]"
-          replaceBlock
-          hasParentWithCssAfterProp
-          cssAfterPropContainer={blockContainerRef}
-          onPressedEnterAtStart={handleOnPressedEnterAtStart}
-          onPressedEnterAtEnd={handleOnPressedEnterAtEnd}
-          onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
-          onInput={handleInput}
-        />
       </BlockContentWrapper>
     </div>
   );

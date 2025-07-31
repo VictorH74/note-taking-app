@@ -7,6 +7,7 @@ import {
   Heading1BlockT,
   Heading2BlockT,
   Heading3BlockT,
+  NumberedListItemBlockT,
   PageContentT,
   ParagraphBlockT,
   TableBlockT,
@@ -20,6 +21,7 @@ import { usePageContent } from "@/hooks/usePageContent";
 import { BlockListType } from "@/context/PageContentCtx";
 import { CheckListItemBlock } from "../../block-components/CheckListItemBlock";
 import { HeadingBlock } from "../../block-components/HeadingBlock";
+import { NumberedListItemBlock } from "../../block-components/NumberedListItemBlock";
 
 export interface ContentListPageEditableChildrenProps {
   pageContentId: PageContentT["id"];
@@ -82,6 +84,14 @@ export const generateItemComponent: Record<
       index={index}
       headingBlockType="heading3"
       item={item as Heading3BlockT}
+      onChange={onChange}
+    />
+  ),
+  numberedlistitem: (item, index, onChange) => (
+    <NumberedListItemBlock
+      key={item.id}
+      index={index}
+      item={item as NumberedListItemBlockT}
       onChange={onChange}
     />
   ),

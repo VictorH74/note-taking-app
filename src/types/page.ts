@@ -35,7 +35,10 @@ export type PageContentT = {
 //   )[];
 // };
 
-export type ListItemTypeT = "checklistitem" | "bulletlistitem";
+export type ListItemTypeT =
+  | "checklistitem"
+  | "bulletlistitem"
+  | "numberedlistitem";
 export type HeadingItemTypeT = "heading1" | "heading2" | "heading3";
 
 export type BlockTypeT =
@@ -73,9 +76,8 @@ export interface CheckListItemBlockT extends ListItemBlockT<"checklistitem"> {
   decoration: "check";
   checked: boolean;
 }
-export interface BulletListItemBlockT extends ListItemBlockT<"bulletlistitem"> {
-  decoration: "bullet";
-}
+export type BulletListItemBlockT = ListItemBlockT<"bulletlistitem">;
+export type NumberedListItemBlockT = ListItemBlockT<"numberedlistitem">;
 export interface Heading1BlockT extends BlockT<"heading1"> {
   text: string;
 }

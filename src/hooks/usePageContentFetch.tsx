@@ -48,6 +48,11 @@ export const usePageContentFetch = (pageId: string) => {
               text: "This is a sample paragraph content. ",
             },
             {
+              id: "numberedlistitem-4",
+              type: "numberedlistitem",
+              text: "Sample Numbered List Item 3",
+            },
+            {
               id: "bulletlistitem-1",
               type: "bulletlistitem",
               text: "Sample List Item 1",
@@ -62,6 +67,21 @@ export const usePageContentFetch = (pageId: string) => {
               id: "bulletlistitem-2",
               type: "bulletlistitem",
               text: 'Sample <span style="background-color:oklch(71.8% 0.202 349.761)">List</span> Item 2',
+            },
+            {
+              id: "numberedlistitem-1",
+              type: "numberedlistitem",
+              text: "Sample Numbered List Item 1",
+            },
+            {
+              id: "numberedlistitem-2",
+              type: "numberedlistitem",
+              text: "Sample Numbered List Item 2 ",
+            },
+            {
+              id: "numberedlistitem-3",
+              type: "numberedlistitem",
+              text: "Sample Numbered List Item 4",
             },
             {
               id: "bulletlistitem-3",
