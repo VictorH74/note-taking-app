@@ -1,4 +1,5 @@
 import { usePageContent } from "@/hooks/usePageContent";
+import { PositionT } from "@/types/global";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -32,14 +33,9 @@ export function BlockActionsProvider(props: BlockActionsProviderProps) {
 
   const { reorderBlockList } = usePageContent();
 
-  const [addBlockModalPos, setAddBlockModalPos] = React.useState<{
-    left: number;
-    top: number;
-  } | null>(null);
-  const [mousePos, setMousePos] = React.useState<{
-    x: number;
-    y: number;
-  } | null>(null);
+  const [addBlockModalPos, setAddBlockModalPos] =
+    React.useState<PositionT | null>(null);
+  const [mousePos, setMousePos] = React.useState<PositionT | null>(null);
 
   const [onDragBlockIndex, setOnDragBlockIndex] = React.useState<number | null>(
     null
@@ -127,7 +123,7 @@ export function BlockActionsProvider(props: BlockActionsProviderProps) {
             setOnDragBlockIndex(null);
           }}
           onMouseMove={(e) => {
-            setMousePos({ x: e.clientX, y: e.clientY });
+            setMousePos({ left: e.clientX, top: e.clientY });
           }}
         >
           {dropAreaDataList.map((data, i) => {
@@ -167,8 +163,8 @@ export function BlockActionsProvider(props: BlockActionsProviderProps) {
               }}
               className="absolute pointer-events-none opacity-40 -translate-y-1/2 "
               style={{
-                top: mousePos.y,
-                left: mousePos.x + increase / 2,
+                top: mousePos.top,
+                left: mousePos.left + increase / 2,
                 width: blockWidthRef.current || 0,
               }}
             />

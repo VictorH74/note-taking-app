@@ -1,9 +1,22 @@
 import { FORMATTING_STYLE, FormattingT } from "./constants";
 import sanitizeHtml from "sanitize-html";
 
+export const hasExistingBgColorStyle = (styles: string) => {
+  return styles.match(new RegExp(/background-color:[^;]*(;|)/));
+};
+export const hasExistingTextColorStyle = (styles: string) => {
+  return styles.match(new RegExp(/(^color:[^;]*(;|)|[^-]color:[^;]*)/));
+};
+export const replaceBgColorStyle = (styles: string, bgColorStyle: string) => {
+  return styles.replaceAll(/background-color:[^;]*(;|)/g, bgColorStyle);
+};
+export const replaceTextColorStyle = (styles: string, colorStyle: string) => {
+  return styles.replaceAll(/(^color:[^;]*(;|)|[^-]color:[^;]*)/g, colorStyle);
+};
+
 export const sanitizeText = (text: string) => {
   return sanitizeHtml(text, {
-    allowedTags: ["span", "br", "div"],
+    allowedTags: ["span", "br"],
     allowedAttributes: {
       span: ["style", "class", "id"],
     },
@@ -12,8 +25,6 @@ export const sanitizeText = (text: string) => {
 
 export const compareStr = (strA: string, strB: string) => {
   if (strA.length !== strB.length) return false;
-
-  console.log("Comparing strings:", strA, strB);
 
   const count = (str: string) => {
     const map = new Map();
@@ -43,8 +54,6 @@ export const applyFocus = (id: string, at: "start" | "end" = "end") => {
 
     const el = element.getElementsByClassName("block-input").item(0);
     if (!el) return;
-
-    el.childNodes.forEach((node) => console.log(node));
 
     if (el.childNodes.length > 0) {
       const caretPosData: Record<
@@ -100,7 +109,7 @@ export const formatText = (text: string): string => {
 
         formattedDataList.push(
           `<span style="${Array.from(formattingList)
-            .map((format) => FORMATTING_STYLE[format])
+            .map((format) => FORMATTING_STYLE[format][0])
             .join("")}" data-token-index="${tokenIndex}">${cleanToken}</span>`
         );
       } else {

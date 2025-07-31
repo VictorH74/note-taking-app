@@ -1,6 +1,7 @@
 import { usePageContent } from "@/hooks/usePageContent";
 import { useTextSelection } from "@/hooks/useTextSelection";
-import { sanitizeText } from "@/utils/functions";
+import { FORMATTING_STYLE, TextColorFormattingT } from "@/utils/constants";
+import { replaceBgColorStyle, sanitizeText } from "@/utils/functions";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 
@@ -38,19 +39,12 @@ export function BlockInput(props: BlockInputProps) {
     if (props.placeholder) {
       const cssAfterPropContainer = getCssAfterPropContainer();
 
-      console.log(cssAfterPropContainer);
-
       if (!cssAfterPropContainer) return;
       cssAfterPropContainer.setAttribute("data-placeholder", props.placeholder);
 
       if (!props.hasParentWithCssAfterProp)
         cssAfterPropContainer.classList.add(...placeholderClassName.split(" "));
     }
-
-    // return () => {
-    //   console.count("BlockInput > useEffect");
-    //   closeTextSelectionAction();
-    // };
   }, []);
 
   const getCssAfterPropContainer = () => {
@@ -61,7 +55,6 @@ export function BlockInput(props: BlockInputProps) {
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLParagraphElement>) => {
-    console.log("+++++++++++++++ BlockInput >> handleKeyDown +++++++++++++++");
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return -1;
 
@@ -75,51 +68,20 @@ export function BlockInput(props: BlockInputProps) {
     // TODO: fix 'caretIndex' precision
     const caretIndex = caretIndexRef.current!;
 
-    console.log(
-      "caretIndex: ",
-      caretIndex,
-      "textContent: ",
-      e.currentTarget.textContent?.length
-    );
-
-    // if (
-    //   e.key == "Backspace" &&
-    //   ((e.currentTarget.textContent?.length || 0) <= 1 || caretIndex == 0)
-    // ) {
-    //   if (props.onPressedBackspaceAtStart) {
-    //     props.onPressedBackspaceAtStart();
-    //     return;
-    //   }
-    // }
-
     if (e.key == "Enter") {
-      // ENTER click at start with existing text content
       if ((e.currentTarget.textContent?.length || 0) > 0 && caretIndex == 0) {
-        console.log(
-          "CONDITION: (e.currentTarget.textContent?.length || 0) > 0 && caretIndex == 0",
-          (e.currentTarget.textContent?.length || 0) > 0,
-          caretIndex == 0
-        );
+        // ENTER click at start with existing text content
         props.onPressedEnterAtStart?.();
         e.preventDefault();
         return;
       }
 
-      // ENTER click with empty text content
       if (
         !e.shiftKey &&
         props.replaceBlock &&
         e.currentTarget.textContent?.length == 0
       ) {
-        console.log(
-          "CONDITION: !e.shiftKey && props.replaceBlock && e.currentTarget.textContent?.length == 0",
-          !e.shiftKey,
-          props.replaceBlock,
-          e.currentTarget.textContent?.length == 0
-        );
-        console.log(
-          "CALLED: addNewParagraphBlock(props.inputBlockIndex, true);"
-        );
+        // ENTER click with empty text content
         addNewParagraphBlock(props.inputBlockIndex, "", true);
         e.preventDefault();
         return;
@@ -128,27 +90,43 @@ export function BlockInput(props: BlockInputProps) {
       const isCaretAtEnd =
         caretIndex >= (e.currentTarget.textContent?.length || 0);
       if (e.shiftKey || !props.onPressedEnterAtEnd || !isCaretAtEnd) {
-        console.log(
-          "CONDITION: e.shiftKey || !props.onPressedEnterAtEnd || !isCaretAtEnd",
-          e.shiftKey,
-          !props.onPressedEnterAtEnd,
-          !isCaretAtEnd
-        );
-        console.log("...");
+        // input break line
+        const br = document.createElement("br");
+
+        range.deleteContents();
+        range.insertNode(br);
+
+        range.setStartAfter(br);
+        range.collapse(true);
+        sel.removeAllRanges();
+        sel.addRange(range);
+
+        props.onInput(e.currentTarget.innerHTML);
+        e.preventDefault();
         return;
       }
 
-      console.log("CALLED: props.onPressedEnterAtEnd();");
+      // ENTER click at end
       props.onPressedEnterAtEnd();
       e.preventDefault();
-    } else if (e.key == "Backspace") {
+      return;
+    }
+    if (e.key == "Backspace") {
       if (props.onPressedBackspaceAtStart && caretIndex == 0) {
         console.log("CALLED: props.onPressedBackspaceAtStart();");
         props.onPressedBackspaceAtStart();
         e.preventDefault();
-        return;
       }
+      return;
     }
+    // TODO: implement actions of navigation between blocks or block lines
+    // if (e.key == "ArrowUp") {
+    //   e.
+    //   return;
+    // }
+    // if (e.key == "ArrowDown") {
+    //   return;
+    // }
   };
 
   const updateCaretIndex = (e: React.SyntheticEvent<HTMLElement, Event>) => {
@@ -180,7 +158,7 @@ export function BlockInput(props: BlockInputProps) {
     showTextSelectionAction({ left, top }, props.inputBlockIndex, id);
   };
 
-  const handleInput = (e: React.FormEvent<HTMLDivElement>) => {
+  const handleInput = (e: React.FormEvent<HTMLElement>) => {
     const cssAfterPropContainer = getCssAfterPropContainer();
 
     if (!cssAfterPropContainer) return;
@@ -200,21 +178,88 @@ export function BlockInput(props: BlockInputProps) {
 
   const handlePaste = (e: React.ClipboardEvent<HTMLElement>) => {
     // TODO: implement 'handlePaste' func
-    e.clipboardData.types.forEach((format) => {
-      console.log(format.toLocaleUpperCase(), e.clipboardData.getData(format));
-    });
+
+    if (e.clipboardData.types.includes("text/html")) {
+      const range = window.getSelection()?.getRangeAt(0);
+
+      if (!range) return;
+
+      const cleanNodesParent = document.createElement("div");
+
+      const div = document.createElement("div");
+      div.innerHTML = sanitizeText(e.clipboardData.getData("text/html"));
+
+      const textColorFPrefix: TextColorFormattingT = "color-";
+      div.childNodes.forEach((node, index) => {
+        if (node.nodeType == Node.ELEMENT_NODE) {
+          const nodeStyles = (node as HTMLElement).getAttribute("style");
+          let newNodeStyles = "";
+          if (!nodeStyles) return;
+          Object.entries(FORMATTING_STYLE).forEach(([fName, fStyles]) => {
+            if (fName.startsWith(textColorFPrefix)) {
+              for (let i = 0; i < fStyles.length; i++) {
+                if (
+                  replaceBgColorStyle(nodeStyles, "").includes(
+                    fStyles[i].replace(/;$/, "")
+                  )
+                ) {
+                  newNodeStyles += fStyles[0];
+                  break;
+                }
+              }
+            } else {
+              for (let i = 0; i < fStyles.length; i++) {
+                if (nodeStyles.includes(fStyles[i].replace(/;$/, ""))) {
+                  newNodeStyles += fStyles[0];
+                  break;
+                }
+              }
+            }
+          });
+
+          if (newNodeStyles == "")
+            cleanNodesParent.innerHTML += (node as HTMLElement).innerHTML;
+          else {
+            cleanNodesParent.innerHTML += `<span style="${newNodeStyles}" >${
+              (node as HTMLElement).innerHTML
+            }</span>`;
+          }
+          return;
+        }
+
+        if (index == 0)
+          cleanNodesParent.innerHTML += new XMLSerializer()
+            .serializeToString(node)
+            .trimStart();
+        else if (index == div.childNodes.length - 1)
+          cleanNodesParent.innerHTML += new XMLSerializer()
+            .serializeToString(node)
+            .trimEnd();
+        else cleanNodesParent.innerHTML += node.textContent;
+      });
+
+      for (let i = cleanNodesParent.childNodes.length; i > 0; i--) {
+        range.insertNode(cleanNodesParent.childNodes.item(i - 1));
+      }
+
+      range.setStartAfter(e.currentTarget.lastChild!);
+      range.collapse(true);
+
+      handleInput(e as React.FormEvent<HTMLElement>);
+      e.preventDefault();
+    }
   };
 
   return React.createElement(props.tag || "div", {
     ref: props.ref || inputRef,
     className: twMerge(
-      "h-fit w-full outline-none block-input",
+      "h-fit w-full outline-none block-input whitespace-pre-wrap",
       id,
       props.className
     ),
     contentEditable: true,
     dangerouslySetInnerHTML: { __html: sanitizeText(props.text) },
-    // TODO: dangerouslySetInnerHTML={{ __html: formatText(item.text) }}
+    // TODO: dangerouslySetInnerHTML={{ __html: formatText(item.text) }},
     onKeyDown: handleKeyDown,
     onFocus: props.onFocus,
     onBlur: props.onBlur,

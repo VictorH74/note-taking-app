@@ -39,13 +39,13 @@ export const usePageContentFetch = (pageId: string) => {
             {
               id: "paragraph-2",
               type: "paragraph",
-              text: 'uma String <span style="font-weight:bold;" data-token-index="1">qualquer que será </span><span style="font-weight:bold;font-style:italic;" data-token-index="2">formatado no</span><span style="font-style:italic;" data-token-index="3"> meu app</span> notion <span style="font-style:italic;" data-token-index="5">clone usando a tag &lt;span&gt;&nbsp;</span><span style="font-weight:bold;font-style:italic;" data-token-index="6">adicional</span>',
+              text: 'uma String <span style="font-weight:bold;">qualquer que será </span><span style="font-weight:bold;font-style:italic;">formatado no</span><span style="font-style:italic;"> meu app</span> notion <span style="font-style:italic;" data-token-index="5">clone usando a tag </span>&lt;span&gt;&nbsp;',
               // text: "uma String &;/B#start/qualquer que será /B#end/&;&;/B#start/&;/I#start/formatado no/I#end/&;/B#end/&;&;/I#start/ meu app/I#end/&; notion &;/I#start/clone/I#end/&; &;/B#start/&;/I#start/adicional/I#end/&;/B#end/&;",
             },
             {
               id: "paragraph-3",
               type: "paragraph",
-              text: "This is a sample paragraph content.",
+              text: "This is a sample paragraph content. ",
             },
             {
               id: "bulletlistitem-1",
@@ -61,7 +61,7 @@ export const usePageContentFetch = (pageId: string) => {
             {
               id: "bulletlistitem-2",
               type: "bulletlistitem",
-              text: "Sample List Item 2",
+              text: 'Sample <span style="background-color:oklch(71.8% 0.202 349.761)">List</span> Item 2',
             },
             {
               id: "bulletlistitem-3",

@@ -34,7 +34,6 @@ export function CheckListItemBlock({
     addNewListItemBlock(item.type, item.indent, index);
   };
   const handleOnPressedEnterAtEnd = () => {
-    console.log("handleOnPressedEnterAtEnd");
     addNewListItemBlock(item.type, item.indent, index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {

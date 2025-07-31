@@ -25,7 +25,6 @@ export function ParagraphBlock({
     addNewParagraphBlock(index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
-    console.log("ParagraphBlock >> handleOnPressedBackspaceAtStart()");
     removeBlock(index, true, pageContent!.blockList[index].text as string);
   };
 
