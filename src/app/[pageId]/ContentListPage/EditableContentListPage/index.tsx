@@ -13,8 +13,6 @@ import { sanitizeText } from "@/utils/functions";
 import { TextSelectionContainer } from "../components/TextSelectionContainer";
 import { BlockActionsProvider } from "../components/BlockActionsProvider";
 
-// TODO: formart content when was copied from the editor
-
 export function EditableContentListPage(
   props: ContentListPageEditableChildrenProps
 ) {

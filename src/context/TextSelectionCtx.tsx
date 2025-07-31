@@ -3,7 +3,6 @@ import {
   FORMATTING_STYLE,
   FormattingT,
   TextFormattingT,
-  TEXT_FORMATTING_NAME_LIST,
   BgColorFormattingT,
   TextColorFormattingT,
 } from "@/utils/constants";
@@ -163,16 +162,15 @@ export function TextSelectionProvider({
         } else if (style.includes(fStyle.replace(/;$/, ""))) count++;
       });
 
+      let isCommonFormatting = false;
+
       if (
         count > 0 &&
         count == selectedNodeFormattingStyleListRef.current!.length
       ) {
         commonFormattingRef.current!.add(fName as FormattingT);
+        isCommonFormatting = true;
       }
-
-      const isCommonFormatting = commonFormattingRef.current?.has(
-        fName as FormattingT
-      );
 
       // style color formatting button
       const colorFBtnStyles = colorFBtn.getAttribute("style") || "";
@@ -184,8 +182,8 @@ export function TextSelectionProvider({
         colorFBtn.setAttribute(
           "style",
           hasExistingTextColorStyle(colorFBtnStyles)
-            ? replaceTextColorStyle(colorFBtnStyles, fStyle[0])
-            : colorFBtnStyles.concat(fStyle[0])
+            ? replaceTextColorStyle(colorFBtnStyles, fStyle)
+            : fStyle.concat(colorFBtnStyles)
         );
         hasTextColorFormatting = true;
       } else if (
@@ -196,8 +194,8 @@ export function TextSelectionProvider({
         colorFBtn.setAttribute(
           "style",
           hasExistingBgColorStyle(colorFBtnStyles)
-            ? replaceBgColorStyle(colorFBtnStyles, fStyle[0])
-            : colorFBtnStyles.concat(fStyle[0])
+            ? replaceBgColorStyle(colorFBtnStyles, fStyle)
+            : fStyle.concat(colorFBtnStyles)
         );
         hasBgColorFormatting = true;
       }
@@ -246,7 +244,6 @@ export function TextSelectionProvider({
     window.removeEventListener("mousedown", closeTextSelectionAction);
   };
 
-  // TODO: when totally usable, check result in DOOM
   const applyRemoveFormatting = (formatting: FormattingT) => {
     const selection = window.getSelection();
     if (!selection) return;
@@ -273,7 +270,7 @@ export function TextSelectionProvider({
     }
 
     setupSelectedStyle();
-    mergeElements();
+    mergeEqualStyleElements();
 
     // update 'pageContent' with changed item
     const blockId = pageContent?.blockList[onChangeBlockIndexRef.current!].id;
@@ -287,8 +284,7 @@ export function TextSelectionProvider({
     });
   };
 
-  // TODO: may be better if called when 'closeTextSelectionAction' is called
-  const mergeElements = () => {
+  const mergeEqualStyleElements = () => {
     const range = window.getSelection()?.getRangeAt(0);
     if (!range) return;
 
@@ -299,69 +295,72 @@ export function TextSelectionProvider({
     if (!blockInputEl) return;
 
     // fragments: [nodeStyle, nodeTextContent]
-    const fragments: [string, string][] = [];
+    const mergedNodesData: [string, string][] = [];
     let currentIndex = 0;
 
     let startRangeOffset: number | null = null;
     let endRangeOffset: number | null = null;
+    let includeWhiteSpaceInNext = false;
     const selectedNodeIndexList: number[] = [];
     blockInputEl.childNodes.forEach((node, index) => {
       const isSelectedNode = range.intersectsNode(node);
 
       const nodeStyle =
         node.nodeType === Node.ELEMENT_NODE
-          ? (node as HTMLElement).getAttribute("style") || ""
+          ? (node as HTMLElement).getAttribute("style")!
           : "";
-      const nodeTextContent = node.textContent || "";
-      const nodeInnerHTML =
+      let nodeTextContent = node.textContent || "";
+      let nodeInnerHTML =
         (node.nodeType === Node.ELEMENT_NODE
           ? (node as HTMLElement).innerHTML
           : new XMLSerializer().serializeToString(node)) || "";
 
       if (nodeTextContent == "") return;
 
-      if (index == 0) {
-        fragments.push([nodeStyle, nodeInnerHTML]);
+      if (includeWhiteSpaceInNext) {
+        nodeInnerHTML = " " + nodeInnerHTML;
+        nodeTextContent = " " + nodeTextContent;
+        includeWhiteSpaceInNext = false;
+      }
+      if (index == 0 || mergedNodesData.length == 0) {
+        mergedNodesData.push([nodeStyle, nodeInnerHTML]);
         if (isSelectedNode) {
           if (!startRangeOffset) startRangeOffset = 0;
           endRangeOffset = nodeTextContent.length;
-          console.log(startRangeOffset, endRangeOffset);
         }
+      } else if (nodeTextContent == " ") {
+        includeWhiteSpaceInNext = true;
       } else if (
         compareStr(
           nodeStyle.replace(/;$/, ""),
-          fragments[currentIndex][0].replace(/;$/, "")
+          mergedNodesData[currentIndex][0].replace(/;$/, "")
         )
       ) {
         if (isSelectedNode) {
           if (!startRangeOffset) {
             // 'temSpan' get the serialized text to get start and end range offset with precision
             const temSpan = document.createElement("span");
-            temSpan.innerHTML = fragments[currentIndex][1];
+            temSpan.innerHTML = mergedNodesData[currentIndex][1];
             startRangeOffset = (temSpan.textContent || "").length;
           }
           endRangeOffset =
-            fragments[currentIndex][1].concat(nodeTextContent).length;
-          console.log(startRangeOffset, endRangeOffset);
+            mergedNodesData[currentIndex][1].concat(nodeTextContent).length;
         }
 
-        fragments[currentIndex][1] += nodeInnerHTML;
+        mergedNodesData[currentIndex][1] += nodeInnerHTML;
       } else {
-        fragments.push([nodeStyle, nodeInnerHTML]);
+        mergedNodesData.push([nodeStyle, nodeInnerHTML]);
         currentIndex++;
         if (isSelectedNode) {
           if (!startRangeOffset) startRangeOffset = 0;
           endRangeOffset = nodeTextContent.length;
         }
       }
-      if (isSelectedNode) {
-        selectedNodeIndexList.push(currentIndex);
-      }
+      if (isSelectedNode) selectedNodeIndexList.push(currentIndex);
     });
-
     const nodeListFrag = document.createDocumentFragment();
     nodeListFrag.append(
-      ...fragments.map((data) => {
+      ...mergedNodesData.map((data) => {
         if (data[0] == "") {
           return document.createTextNode(data[1]);
         }
@@ -372,26 +371,7 @@ export function TextSelectionProvider({
       })
     );
 
-    console.log(fragments);
-    console.log(
-      fragments
-        .map((data) => {
-          if (data[0] == "") {
-            return data[1];
-          }
-          return `<span style="${data[0]}">${data[1]}</span>`;
-        })
-        .join("")
-    );
-    console.log(selectedNodeIndexList);
-    if (startRangeOffset && endRangeOffset)
-      console.log(
-        selectedNodeIndexList.map((index) => fragments[index][1]).join(""),
-        startRangeOffset,
-        endRangeOffset
-      );
-
-    blockInputEl.innerHTML = fragments
+    blockInputEl.innerHTML = mergedNodesData
       .map((data) => {
         if (data[0] == "") {
           return data[1];
@@ -416,61 +396,70 @@ export function TextSelectionProvider({
     }
   };
 
-  // TODO: override color formatting
   const applyFormattingToMultipleNodes = (
     formatting: FormattingT,
     selection: Selection
   ) => {
-    console.log(`   ## apply ${formatting} formatting to multiple nodes`);
+    console.log(`   ## (AM) apply ${formatting} formatting to multiple nodes`);
     if (!selectedNodeFormattingStyleListRef.current) return;
-    let currentIndex = 0;
-
-    const frag = document.createDocumentFragment();
+    const selectedNodeFormattingStyleList =
+      selectedNodeFormattingStyleListRef.current;
 
     const range = selection.getRangeAt(0);
     const selectedNodes = range.cloneContents().childNodes;
 
     // apply formatting styles and merge duplicated formatting style elements
-    const formattingDataList: [string, string][] = [];
+    const textColorFormattingPrefix: TextColorFormattingT = "color-";
+    const bgColorFormattingPrefix: BgColorFormattingT = "bg-";
+    const mergedNodesData: [string, string][] = [];
+    let currentIndex = 0;
     selectedNodes.forEach((node, index) => {
       let nodeStyle =
-        node.nodeType == 1
-          ? selectedNodeFormattingStyleListRef.current![index]
+        node.nodeType == Node.ELEMENT_NODE
+          ? selectedNodeFormattingStyleList[index]
           : "";
 
       const fStile = FORMATTING_STYLE[formatting][0];
 
       // code snippets for applying
-      if (!nodeStyle.includes(fStile.replace(/;$/, "")))
+      if (
+        formatting.startsWith(textColorFormattingPrefix) &&
+        hasExistingTextColorStyle(nodeStyle)
+      ) {
+        nodeStyle = replaceTextColorStyle(nodeStyle, fStile);
+      } else if (
+        formatting.startsWith(bgColorFormattingPrefix) &&
+        hasExistingBgColorStyle(nodeStyle)
+      ) {
+        nodeStyle = replaceBgColorStyle(nodeStyle, fStile);
+      } else if (!nodeStyle.includes(fStile.replace(/;$/, ""))) {
         nodeStyle = fStile.concat(nodeStyle);
+      }
 
       const nodeTextContent = node.textContent || "";
 
       // code snippets for merging
       if (index == 0) {
-        formattingDataList[currentIndex] = [nodeStyle, nodeTextContent];
-        return;
-      }
-
-      // slice func is used to ignore trailing semicolon in the compareStr func
-      if (
+        mergedNodesData[currentIndex] = [nodeStyle, nodeTextContent];
+      } else if (
         compareStr(
-          nodeStyle.replaceAll(";", ""),
-          formattingDataList[currentIndex][0].replaceAll(";", "")
+          nodeStyle.replace(/;$/, ""),
+          mergedNodesData[currentIndex][0].replace(/;$/, "")
         )
       ) {
-        formattingDataList[currentIndex][1] += nodeTextContent;
-        return;
+        mergedNodesData[currentIndex][1] += nodeTextContent;
+      } else {
+        currentIndex++;
+        mergedNodesData[currentIndex] = [nodeStyle, nodeTextContent];
       }
-      currentIndex++;
-      formattingDataList[currentIndex] = [nodeStyle, nodeTextContent];
     });
 
     // include new fotmatting style in DOOM
+    const frag = document.createDocumentFragment();
     range.extractContents();
-    formattingDataList.forEach((data) => {
+    mergedNodesData.forEach((data) => {
       const [style, textContent] = data;
-      const span = createSpanElWithStyle(style);
+      const span = createFormattedSpan(style);
       span.textContent = textContent;
       frag.appendChild(span);
     });
@@ -501,76 +490,73 @@ export function TextSelectionProvider({
         startContainer: { parentElement: parentEl },
       } = range;
 
-      let parentStyle = parentEl?.getAttribute("style") || "";
+      const parentStyle = parentEl?.getAttribute("style") || "";
+      let finalStyles = parentStyle;
+
+      const textColorFormattingPrefix: TextColorFormattingT = "color-";
+      const bgColorFormattingPrefix: BgColorFormattingT = "bg-";
 
       if (
-        !(TEXT_FORMATTING_NAME_LIST as readonly string[]).includes(formatting)
+        formatting.startsWith(textColorFormattingPrefix) &&
+        hasExistingTextColorStyle(finalStyles)
       ) {
-        const textColorFormattingPrefix: TextColorFormattingT = "color-";
-        const bgColorFormattingPrefix: BgColorFormattingT = "bg-";
-        if (
-          formatting.startsWith(textColorFormattingPrefix) &&
-          hasExistingTextColorStyle(parentStyle)
-        ) {
-          // remove existing text color style
-          parentStyle = replaceTextColorStyle(parentStyle, "");
-        } else if (
-          formatting.startsWith(bgColorFormattingPrefix) &&
-          hasExistingBgColorStyle(parentStyle)
-        ) {
-          // remove existing bg color style
-          parentStyle = replaceBgColorStyle(parentStyle, "");
-        }
+        // remove existing text color style
+        finalStyles = replaceTextColorStyle(finalStyles, "");
+      } else if (
+        formatting.startsWith(bgColorFormattingPrefix) &&
+        hasExistingBgColorStyle(finalStyles)
+      ) {
+        // remove existing bg color style
+        finalStyles = replaceBgColorStyle(finalStyles, "");
       }
 
-      const parentTextContent = parentEl!.textContent || "";
-      const selectedTextContent = parentTextContent.slice(
-        startOffset,
-        endOffset
-      );
+      finalStyles = onAddStyle.concat(finalStyles);
 
-      if (selectedTextContent == parentTextContent) {
+      const parentText = parentEl!.textContent || "";
+      const selectedText = parentText.slice(startOffset, endOffset);
+
+      const getSlicedText = makeGetSlicedText(parentText);
+
+      if (selectedText == parentText) {
         // all span element was selected
-        parentEl!.setAttribute("style", onAddStyle.concat(parentStyle));
+        parentEl!.setAttribute("style", finalStyles);
         return;
       }
 
-      // ## fragment parent element to add the selected formatting style to selected range
+      // ## fragments parent element to add the selected formatting style to selected range
       const frag = document.createDocumentFragment();
       let newSelectedNode: HTMLElement;
 
       if (startOffset == 0) {
-        // ### fragment parent in 2 <span> elements
-        const leftSpan = createSpanElWithStyle(onAddStyle.concat(parentStyle));
-        leftSpan.textContent = selectedTextContent;
+        // ### fragments parent in 2 <span> elements
+        const leftSpan = createFormattedSpan(finalStyles);
+        leftSpan.textContent = selectedText;
 
-        const rightSpan = createSpanElWithStyle(parentStyle);
-        rightSpan.textContent = parentTextContent.slice(endOffset);
+        const rightSpan = createFormattedSpan(parentStyle);
+        rightSpan.textContent = getSlicedText(endOffset);
 
         frag.append(leftSpan, rightSpan);
         newSelectedNode = leftSpan;
-      } else if (endOffset == parentTextContent.length) {
-        // ### fragment parent in 2 <span> elements
-        const leftSpan = createSpanElWithStyle(parentStyle);
-        leftSpan.textContent = parentTextContent.slice(0, startOffset);
+      } else if (endOffset == parentText.length) {
+        // ### fragments parent in 2 <span> elements
+        const leftSpan = createFormattedSpan(parentStyle);
+        leftSpan.textContent = getSlicedText(0, startOffset);
 
-        const rightSpan = createSpanElWithStyle(onAddStyle.concat(parentStyle));
-        rightSpan.textContent = selectedTextContent;
+        const rightSpan = createFormattedSpan(finalStyles);
+        rightSpan.textContent = selectedText;
 
         frag.append(leftSpan, rightSpan);
         newSelectedNode = rightSpan;
       } else {
-        // ### fragment parent in 3 <span> elements
-        const leftSpan = createSpanElWithStyle(parentStyle);
-        leftSpan.textContent = parentTextContent.slice(0, startOffset);
+        // ### fragments parent in 3 <span> elements
+        const leftSpan = createFormattedSpan(parentStyle);
+        leftSpan.textContent = getSlicedText(0, startOffset);
 
-        const middleSpan = createSpanElWithStyle(
-          onAddStyle.concat(parentStyle)
-        );
-        middleSpan.textContent = selectedTextContent;
+        const middleSpan = createFormattedSpan(finalStyles);
+        middleSpan.textContent = selectedText;
 
-        const rightSpan = createSpanElWithStyle(parentStyle);
-        rightSpan.textContent = parentTextContent.slice(endOffset);
+        const rightSpan = createFormattedSpan(parentStyle);
+        rightSpan.textContent = getSlicedText(endOffset);
 
         frag.append(leftSpan, middleSpan, rightSpan);
         newSelectedNode = middleSpan;
@@ -581,10 +567,8 @@ export function TextSelectionProvider({
       return;
     }
 
-    console.log("aaaaaa");
-
     // # Parent element is a text fragment
-    const span = createSpanElWithStyle(onAddStyle);
+    const span = createFormattedSpan(onAddStyle);
     range.surroundContents(span);
     range.selectNodeContents(span.firstChild!);
   };
@@ -593,58 +577,51 @@ export function TextSelectionProvider({
     formatting: FormattingT,
     selection: Selection
   ) => {
-    let currentIndex = 0;
-    const frag = document.createDocumentFragment();
-    const fragDataList: [string, string][] = [];
+    if (!selectedNodeFormattingStyleListRef.current) return;
+    const selectedNodeFormattingStyleList =
+      selectedNodeFormattingStyleListRef.current;
 
     const range = selection.getRangeAt(0);
     const selectedNodes = range.cloneContents().childNodes;
 
     // remove formatting styles and merge duplicated formatting style elements
+    const mergedNodesData: [string, string][] = [];
+    let currentIndex = 0;
     selectedNodes.forEach((node, index) => {
       const nodeStyleSet = new Set(
-        // TODO: make this array generation more clean
-        node.nodeType == 1
-          ? selectedNodeFormattingStyleListRef
-              .current![index].slice(
-                0,
-                selectedNodeFormattingStyleListRef.current![index].endsWith(";")
-                  ? -1
-                  : selectedNodeFormattingStyleListRef.current![index].length
-              )
+        node.nodeType == Node.ELEMENT_NODE
+          ? selectedNodeFormattingStyleList[index]
+              .replace(/;$/, "")
               .split(";")
-              .map((str) => str.concat(";"))
               .toSorted()
           : []
       );
 
-      const fStyle = FORMATTING_STYLE[formatting][0];
+      const fStyle = FORMATTING_STYLE[formatting][0].replace(/;$/, "");
+      const nodeText = node.textContent || "";
 
       // code snippets for removing
-      if (nodeStyleSet.has(fStyle)) {
-        nodeStyleSet.delete(fStyle);
-      }
+      if (nodeStyleSet.has(fStyle)) nodeStyleSet.delete(fStyle);
 
       // code snippets for merging
-      const nodeStyleStr = Array.from(nodeStyleSet).join("");
+      const nodeStyleStr = Array.from(nodeStyleSet).join(";");
       if (index == 0) {
-        fragDataList[currentIndex] = [nodeStyleStr, node.textContent || ""];
-        return;
+        mergedNodesData[currentIndex] = [nodeStyleStr, nodeText];
+      } else if (nodeStyleStr == mergedNodesData[currentIndex][0]) {
+        mergedNodesData[currentIndex][1] += nodeText;
+      } else {
+        currentIndex++;
+        mergedNodesData[currentIndex] = [nodeStyleStr, nodeText];
       }
-      if (nodeStyleStr == fragDataList[currentIndex][0]) {
-        fragDataList[currentIndex][1] += node.textContent || "";
-        return;
-      }
-      currentIndex++;
-      fragDataList[currentIndex] = [nodeStyleStr || "", node.textContent || ""];
     });
 
     // include new fomatting style in DOOM
+    const frag = document.createDocumentFragment();
     range.extractContents();
-    fragDataList.forEach((data) => {
+    mergedNodesData.forEach((data) => {
       const [fStyle, textContent] = data;
       if (fStyle !== "") {
-        const span = createSpanElWithStyle(fStyle);
+        const span = createFormattedSpan(fStyle);
         span.textContent = textContent;
         frag.appendChild(span);
         return;
@@ -663,6 +640,7 @@ export function TextSelectionProvider({
     formatting: FormattingT,
     selection: Selection
   ) => {
+    console.log(`   ## (RU) remove ${formatting} formatting from unique node`);
     const range = selection.getRangeAt(0);
     const {
       startOffset,
@@ -675,14 +653,17 @@ export function TextSelectionProvider({
         "removeFormattingToUniqueNode func must be used only in node type == 1"
       );
 
-    const textContent = parentEl.textContent || "";
+    const parentText = parentEl.textContent || "";
     const parentStyle = parentEl.getAttribute("style") || "";
     const frag = document.createDocumentFragment();
 
-    const allParentTextContentSelected =
-      textContent == textContent.slice(startOffset, endOffset);
+    const getSlicedText = makeGetSlicedText(parentText);
+    const isAllParentTextSelected =
+      parentText == getSlicedText(startOffset, endOffset);
 
     if (commonFormattingRef.current!.size > 1) {
+      // will result in 2-3 <span> elements
+
       const onRemoveStyle = FORMATTING_STYLE[formatting][0];
 
       // ensure no trailing semicolon
@@ -690,58 +671,45 @@ export function TextSelectionProvider({
       if (newStyle.length == parentStyle.length)
         newStyle = parentStyle.replace(onRemoveStyle.replace(/;$/, ""), "");
 
-      if (allParentTextContentSelected) {
-        console.log(
-          `>>>> (RUAA) remove ${formatting} formatting from unique <span> node that have all content selected`
-        );
-
+      if (isAllParentTextSelected) {
         parentEl.setAttribute("style", newStyle);
         return;
       }
 
-      // ## fragment parent element to remove the selected formatting style from selected range
+      // ## fragments parent element to remove the selected formatting style from selected range
 
       let newSelectedNode: HTMLElement;
 
       if (startOffset == 0) {
-        // ### fragment parent in 2 <span> elements
-        console.log(
-          `>>>> (RUAB) remove ${formatting} formatting of start part from unique <span> node`
-        );
-        const leftSpan = createSpanElWithStyle(newStyle);
-        leftSpan.textContent = textContent.slice(0, endOffset);
+        // ### fragments parent in 2 <span> elements
+        const leftSpan = createFormattedSpan(newStyle);
+        leftSpan.textContent = getSlicedText(0, endOffset);
 
-        const rightSpan = createSpanElWithStyle(parentStyle);
-        rightSpan.textContent = textContent.slice(endOffset);
+        const rightSpan = createFormattedSpan(parentStyle);
+        rightSpan.textContent = getSlicedText(endOffset);
 
         frag.append(leftSpan, rightSpan);
         newSelectedNode = leftSpan;
-      } else if (endOffset == textContent.length) {
-        console.log(
-          `>>>> (RUAC) remove ${formatting} formatting of end part from unique <span> node`
-        );
-        // ### fragment parent in 2 <span> elements
-        const leftSpan = createSpanElWithStyle(parentStyle);
-        leftSpan.textContent = textContent.slice(0, startOffset);
+      } else if (endOffset == parentText.length) {
+        // ### fragments parent in 2 <span> elements
+        const leftSpan = createFormattedSpan(parentStyle);
+        leftSpan.textContent = getSlicedText(0, startOffset);
 
-        const rightSpan = createSpanElWithStyle(newStyle);
+        const rightSpan = createFormattedSpan(newStyle);
         rightSpan.textContent = range.extractContents().textContent;
 
         frag.append(leftSpan, rightSpan);
         newSelectedNode = rightSpan;
       } else {
-        console.log(
-          `>>>> (RUAD) remove ${formatting} formatting of middle part from unique <span> node`
-        );
-        // ### fragment parent in 3 <span> elements
-        const leftSpan = createSpanElWithStyle(parentStyle);
-        leftSpan.textContent = textContent.slice(0, startOffset);
+        // ### fragments parent in 3 <span> elements
+        const leftSpan = createFormattedSpan(parentStyle);
+        leftSpan.textContent = getSlicedText(0, startOffset);
 
-        const middleSpan = createSpanElWithStyle(newStyle);
+        const middleSpan = createFormattedSpan(newStyle);
         middleSpan.textContent = range.extractContents().textContent;
 
-        const rightSpan = createSpanElWithStyle(parentStyle);
-        rightSpan.textContent = textContent.slice(endOffset);
+        const rightSpan = createFormattedSpan(parentStyle);
+        rightSpan.textContent = getSlicedText(endOffset);
 
         frag.append(leftSpan, middleSpan, rightSpan);
         newSelectedNode = middleSpan;
@@ -751,12 +719,9 @@ export function TextSelectionProvider({
       range.selectNodeContents(newSelectedNode.firstChild!);
       return;
     }
+    // will result in 1 text node and 1-2 <span> elements
 
-    if (allParentTextContentSelected) {
-      console.log(
-        `>>>> (RUBA) remove ${formatting} formatting from unique <span> node that have all content selected`
-      );
-
+    if (isAllParentTextSelected) {
       const textNode = document.createTextNode(selection.toString());
       parentEl.replaceWith(textNode);
       range.selectNodeContents(textNode);
@@ -765,56 +730,50 @@ export function TextSelectionProvider({
 
     let newSelectedNode: Text;
     if (startOffset == 0) {
-      console.log(
-        `>>>> (RUBB) remove ${formatting} formatting of start part from unique <span> node`
-      );
-      // ## fragment parent in 1 text node and 1 span element
-      const textNode = document.createTextNode(textContent.slice(0, endOffset));
+      // ## fragments parent in 1 text node and 1 span element
+      const textNode = document.createTextNode(getSlicedText(0, endOffset));
 
-      const endPart = createSpanElWithStyle(parentStyle);
-      endPart.textContent = textContent.slice(endOffset);
+      const endPart = createFormattedSpan(parentStyle);
+      endPart.textContent = getSlicedText(endOffset);
 
       frag.append(textNode, endPart);
       newSelectedNode = textNode;
-    } else if (endOffset == textContent.length) {
-      console.log(
-        `>>>> (RUBC) remove ${formatting} formatting of end part from unique <span> node`
-      );
-      // ## fragment parent in 1 span element and 1 text node
-      const startPart = createSpanElWithStyle(parentStyle);
-      startPart.textContent = textContent.slice(0, startOffset);
+    } else if (endOffset == parentText.length) {
+      // ## fragments parent in 1 span element and 1 text node
+      const startPart = createFormattedSpan(parentStyle);
+      startPart.textContent = getSlicedText(0, startOffset);
 
-      const textNode = document.createTextNode(textContent.slice(startOffset));
+      const textNode = document.createTextNode(getSlicedText(startOffset));
 
       frag.append(startPart, textNode);
       newSelectedNode = textNode;
     } else {
-      console.log(
-        `>>>> (RUBD) remove ${formatting} formatting of middle part from unique <span> node`
-      );
-      // ## fragment parent in 2 <span> elements and 1 text node beetwen them
-      console.log(`### 3 parts ###`);
-      const leftSpan = createSpanElWithStyle(parentStyle);
-      leftSpan.textContent = textContent.slice(0, startOffset);
+      // ## fragments parent in 2 <span> elements and 1 text node beetwen them
+      const leftSpan = createFormattedSpan(parentStyle);
+      leftSpan.textContent = getSlicedText(0, startOffset);
 
-      const middleTextNode = document.createTextNode(selection.toString());
+      const middle = document.createTextNode(selection.toString());
 
-      const rightSpan = createSpanElWithStyle(parentStyle);
-      rightSpan.textContent = textContent.slice(endOffset);
+      const rightSpan = createFormattedSpan(parentStyle);
+      rightSpan.textContent = getSlicedText(endOffset);
 
-      frag.append(leftSpan, middleTextNode, rightSpan);
-      newSelectedNode = middleTextNode;
+      frag.append(leftSpan, middle, rightSpan);
+      newSelectedNode = middle;
     }
 
     parentEl.replaceWith(frag);
     range.selectNodeContents(newSelectedNode);
   };
 
-  const createSpanElWithStyle = (style: string) => {
+  const createFormattedSpan = (style: string) => {
     const span = document.createElement("span");
     span.setAttribute("style", style);
     return span;
   };
+
+  const makeGetSlicedText =
+    (text: string) => (startIndex?: number, endIndex?: number) =>
+      text.slice(startIndex, endIndex);
 
   return (
     <TextSelectionCtx.Provider

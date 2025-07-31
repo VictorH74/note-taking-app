@@ -38,7 +38,6 @@ export const FORMATTING_NAME_LIST = [
   ...BG_COLOR_FORMATTING_NAME_LIST,
 ] as const;
 
-// TODO: test values as array
 export const FORMATTING_STYLE: Record<FormattingT, `${string}:${string};`[]> = {
   bold: ["font-weight:bold;", "font-weight:600;"],
   italic: ["font-style:italic;"],

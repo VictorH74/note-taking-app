@@ -11,7 +11,6 @@ type ActionBtnDataListT = Pick<
   ref?: (el: HTMLButtonElement) => void;
 };
 
-// TODO: depois da execuçãp de qualquer função de format., verificar na elemento pai todos as childrens para mesclar elementos com o mesmo estilo de format.
 export const useTextSelectionActions = () => {
   const {
     TextSelectionActionsRef,

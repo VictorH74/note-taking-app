@@ -22,18 +22,6 @@ export type PageContentT = {
   title: string;
   blockList: (BlockT & { [k: string]: unknown })[]; // Allow additional properties
 };
-// export type PageContentT = {
-//   id: string;
-//   title: string;
-//   blockList: (
-//     | CodeBlockT
-//     | TableBlockT
-//     | CheckListItemBlockT
-//     | BulletListItemBlockT
-//     | Heading1BlockT
-//     | ParagraphBlockT
-//   )[];
-// };
 
 export type ListItemTypeT =
   | "checklistitem"
@@ -48,17 +36,13 @@ export type BlockTypeT =
   | "table"
   | "paragraph";
 
-export type ListItemDecorationT = "bullet" | "number" | "check";
-
 export interface BlockT<T extends BlockTypeT = BlockTypeT> {
   id: `${T}-${number}`;
   type: T;
 }
 
-// TODO: check if 'decoration' is needed in this type
 export interface ListItemBlockT<T extends ListItemTypeT> extends BlockT<T> {
   text: string;
-  decoration: ListItemDecorationT;
   indent?: number; // Indentation level for nested lists
 }
 
@@ -73,7 +57,6 @@ export interface TableBlockT extends BlockT<"table"> {
   rows: string[][];
 }
 export interface CheckListItemBlockT extends ListItemBlockT<"checklistitem"> {
-  decoration: "check";
   checked: boolean;
 }
 export type BulletListItemBlockT = ListItemBlockT<"bulletlistitem">;

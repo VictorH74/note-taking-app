@@ -177,7 +177,7 @@ export function BlockInput(props: BlockInputProps) {
   };
 
   const handlePaste = (e: React.ClipboardEvent<HTMLElement>) => {
-    // TODO: implement 'handlePaste' func
+    // TODO: create code block if data was copied from vs code
 
     if (e.clipboardData.types.includes("text/html")) {
       const range = window.getSelection()?.getRangeAt(0);
@@ -259,7 +259,6 @@ export function BlockInput(props: BlockInputProps) {
     ),
     contentEditable: true,
     dangerouslySetInnerHTML: { __html: sanitizeText(props.text) },
-    // TODO: dangerouslySetInnerHTML={{ __html: formatText(item.text) }},
     onKeyDown: handleKeyDown,
     onFocus: props.onFocus,
     onBlur: props.onBlur,
