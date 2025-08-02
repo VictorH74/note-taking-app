@@ -47,41 +47,86 @@ export const compareStr = (strA: string, strB: string) => {
 export const applyFocus = (id: string, at: "start" | "end" = "end") => {
   setTimeout(() => {
     const element = document.getElementById(id);
-    const range = document.createRange();
     const selection = window.getSelection();
-
     if (!element || !selection) return;
 
+    const range = document.createRange();
     const el = element.getElementsByClassName("block-input").item(0);
     if (!el) return;
 
     if (el.childNodes.length > 0) {
       const caretPosData: Record<
         typeof at,
-        { child: ChildNode; offset: number }
+        { node: ChildNode; offset: number }
       > = {
         start: {
-          child: el.firstChild!,
+          node: el.firstChild!,
           offset: 0,
         },
         end: {
-          child: el.lastChild!,
+          node: el.lastChild!,
           offset: el.lastChild!.textContent?.length || 0,
         },
       };
-      const { child, offset } = caretPosData[at];
+      const { node, offset } = caretPosData[at];
 
-      range.setStart(child, offset);
+      range.setStart(
+        node.nodeType == Node.ELEMENT_NODE ? node.firstChild! : node,
+        offset
+      );
       range.collapse(true);
 
       selection.removeAllRanges();
       selection.addRange(range);
-
       return;
     }
 
     (el as HTMLElement).focus();
   }, 0);
+};
+
+export const applyFocusByIndex = (id: string, offset: number) => {
+  const element = document.getElementById(id);
+  const selection = window.getSelection();
+  if (!element || !selection) return;
+
+  const range = document.createRange();
+  const el = element.getElementsByClassName("block-input").item(0);
+  if (!el) return;
+
+  if (el.childNodes.length > 0) {
+    let targetNode: ChildNode | null = null;
+    for (let i = 0; i < el.childNodes.length; i++) {
+      const node = el.childNodes[i];
+      const nodeTextLength = node.textContent?.length || 0;
+
+      if (nodeTextLength >= offset) {
+        targetNode = node;
+        break;
+      }
+      offset -= nodeTextLength;
+    }
+
+    if (!targetNode) {
+      targetNode = el.lastChild!;
+      offset = el.lastChild!.textContent?.length || 0;
+    }
+
+    range.setStart(
+      targetNode.nodeType == Node.ELEMENT_NODE
+        ? targetNode.firstChild!
+        : targetNode,
+      offset
+    );
+    range.collapse(true);
+
+    selection.removeAllRanges();
+    selection.addRange(range);
+
+    return;
+  }
+
+  (el as HTMLElement).focus();
 };
 
 export const formatText = (text: string): string => {
@@ -124,7 +169,3 @@ export const formatText = (text: string): string => {
 
   return formattedDataList.join("");
 };
-
-// "//italic#start//clone//italic#end//"
-
-// uma String <b>qualquer que será </b><i><b>formatado no</b></i><i> meu app</i> notion <i>clone</i> <i><b>adicional</b></i>

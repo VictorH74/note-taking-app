@@ -47,6 +47,10 @@ export function EditableContentListPage(
               )}
             </BlockActionsProvider>
           </TextSelectionContainer>
+          <button
+            className="h-14 w-full cursor-text"
+            onClick={hook.createNewParagraphBlock}
+          ></button>
         </main>
       </div>
     </div>

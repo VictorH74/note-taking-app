@@ -22,6 +22,7 @@ import { BlockListType } from "@/context/PageContentCtx";
 import { CheckListItemBlock } from "../../block-components/CheckListItemBlock";
 import { HeadingBlock } from "../../block-components/HeadingBlock";
 import { NumberedListItemBlock } from "../../block-components/NumberedListItemBlock";
+import { applyFocus } from "@/utils/functions";
 
 export interface ContentListPageEditableChildrenProps {
   pageContentId: PageContentT["id"];
@@ -132,6 +133,7 @@ export const useEditableContentList = (
     setPageContent,
     changePageContentTitle,
     changePageContentBlockListItem,
+    addNewParagraphBlock,
   } = usePageContent();
 
   React.useEffect(() => {
@@ -153,9 +155,20 @@ export const useEditableContentList = (
     changePageContentTitle(e.currentTarget.innerText);
   };
 
+  const createNewParagraphBlock = () => {
+    const lastBlock = pageContent?.blockList.at(-1);
+    if (lastBlock?.type == "paragraph" && !lastBlock.text) {
+      applyFocus(lastBlock.id);
+      return;
+    }
+
+    addNewParagraphBlock();
+  };
+
   return {
     pageContent,
     makeHandleItemChange,
     handleContentTitleChange,
+    createNewParagraphBlock,
   };
 };

@@ -21,6 +21,9 @@ export function ParagraphBlock({
 
   const { pageContent, addNewParagraphBlock, removeBlock } = usePageContent();
 
+  const handleOnPressedEnterAtStart = () => {
+    addNewParagraphBlock(index);
+  };
   const handleOnPressedEnterAtEnd = () => {
     addNewParagraphBlock(index + 1);
   };
@@ -68,6 +71,7 @@ export function ParagraphBlock({
           onFocus={handleFocus}
           onBlur={handleBlur}
           onInput={handleInput}
+          onPressedEnterAtStart={handleOnPressedEnterAtStart}
           onPressedEnterAtEnd={handleOnPressedEnterAtEnd}
           onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
         />

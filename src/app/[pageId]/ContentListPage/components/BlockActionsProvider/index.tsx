@@ -108,6 +108,7 @@ export function BlockActionsProvider(props: BlockActionsProviderProps) {
     <BlockActionsCtx.Provider value={{ dragBlock, openAddBlockModal }}>
       {props.children}
       {addBlockModalPos && (
+        // TODO: implement functional AddBlockMenu
         <div
           className="absolute w-[300px] h-[200px] border-2 border-purple-300"
           style={addBlockModalPos}

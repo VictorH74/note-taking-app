@@ -5,6 +5,7 @@ import {
   BlockTypeT,
   BulletListItemBlockT,
   CheckListItemBlockT,
+  CodeBlockT,
   Heading1BlockT,
   Heading2BlockT,
   Heading3BlockT,
@@ -51,6 +52,12 @@ interface ContentListCtxProps {
     type: "heading1" | "heading2" | "heading3",
     newIndex?: number
   ): void;
+  addCodeBlock: (
+    content?: string,
+    language?: string,
+    index?: number,
+    replace?: boolean
+  ) => void;
   removeBlock(
     index: number,
     focusPrevBlock?: boolean,
@@ -147,8 +154,6 @@ export function PageContentProvider({
     initialText: string = "",
     replace?: boolean
   ) => {
-    if (!pageContent) return;
-
     const newItem: ParagraphBlockT = {
       id: `paragraph-${Date.now()}`,
       text: initialText,
@@ -159,8 +164,6 @@ export function PageContentProvider({
   };
 
   const addNewHeadingBlock = (type: HeadingItemTypeT, newIndex?: number) => {
-    if (!pageContent) return;
-
     const baseData = {
       text: "",
       type: type,
@@ -189,8 +192,6 @@ export function PageContentProvider({
     indent?: number,
     newIndex?: number
   ) {
-    if (!pageContent) return;
-
     const baseData = {
       id: `${type}-${Date.now()}`,
       text: "",
@@ -213,6 +214,22 @@ export function PageContentProvider({
 
     addNewBlock(newListItemBlockByType[type], newIndex);
   }
+
+  const addCodeBlock = (
+    content: string = "",
+    language: string = "JavasSript",
+    index?: number,
+    replace?: boolean
+  ) => {
+    const data: CodeBlockT = {
+      id: `code-${Date.now()}`,
+      type: "code",
+      content,
+      language,
+    };
+
+    addNewBlock(data, index, replace);
+  };
 
   const addNewBlock = (item: BlockT, index?: number, replace?: boolean) => {
     if (!pageContent) return;
@@ -242,16 +259,7 @@ export function PageContentProvider({
 
     if (toConcatText && index > 0) {
       const block = temp.blockList[index - 1];
-      if (
-        [
-          "checklistitem",
-          "bulletlistitem",
-          "heading1",
-          "heading2",
-          "heading3",
-          "paragraph",
-        ].includes(block.type)
-      ) {
+      if (!!block.text) {
         block.text += toConcatText;
       }
     }
@@ -290,6 +298,7 @@ export function PageContentProvider({
         setPageContent,
         addNewListItemBlock,
         addHeadingBlock,
+        addCodeBlock,
         removeBlock,
         reorderBlockList,
       }}

@@ -63,7 +63,7 @@ export function NumberedListItemBlock({
     >
       <BlockContentWrapper blockIndex={index} className="flex">
         <div className="relative w-full ml-[25px]">
-          <span className=" absolute top-0 right-[calc(100%+6px)] py-1 font-medium">
+          <span className=" absolute top-0 right-[calc(100%+6px)] py-[6px] font-medium">
             {getNumber(index)}.
           </span>
           <BlockInput
