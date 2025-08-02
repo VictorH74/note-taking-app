@@ -12,7 +12,7 @@ type ActionBtnDataListT = Pick<
   ref?: (el: HTMLButtonElement) => void;
 };
 
-export const useTextSelectionActions = () => {
+export const useTextFormattingActionMenu = () => {
   const {
     TextSelectionActionsRef,
     commonFormattingRef,

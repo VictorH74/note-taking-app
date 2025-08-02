@@ -1,10 +1,10 @@
 import React from "react";
-import { useTextSelectionActions } from "./useTextSelectionActions";
+import { useTextFormattingActionMenu } from "./useTextFormattingActionMenu";
 import { twMerge } from "tailwind-merge";
 import { ColorPicker } from "./components/ColorPicker";
 
-export function TextSelectionActions() {
-  const hook = useTextSelectionActions();
+export function TextFormattingActionMenu() {
+  const hook = useTextFormattingActionMenu();
 
   return (
     <div
@@ -24,7 +24,7 @@ export function TextSelectionActions() {
           />
         ))}
       </div>
-
+      {/* TODO: fix color picker component position and display */}
       {hook.colorPickerPos && <ColorPicker position={hook.colorPickerPos} />}
     </div>
   );

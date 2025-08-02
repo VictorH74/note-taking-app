@@ -62,7 +62,7 @@ export function TextSelectionProvider({
 
   const { pageContent, changePageContentBlockListItem } = usePageContent();
 
-  const showTextSelectionAction = (
+  const showTextFormattingActionMenu = (
     selectedRangePos: {
       left: number;
       top: number;
@@ -92,21 +92,16 @@ export function TextSelectionProvider({
     TextSelectionActions.style.opacity = "100%";
     TextSelectionActions.style.pointerEvents = "all";
 
-    setupSelectedStyle();
+    setup();
 
-    window.addEventListener("mousedown", closeTextSelectionAction);
+    window.addEventListener("mousedown", hideTextFormattingActionMenu);
   };
 
-  // TODO: better name to this func
-  const setupSelectedStyle = () => {
+  const setup = () => {
     const selection = window.getSelection();
     if (!selection) return;
 
     const range = selection.getRangeAt(0);
-
-    range
-      .cloneContents()
-      .childNodes.forEach((node) => console.log("          ", node));
 
     // get formatting styles from selected nodes
     selectedNodeFormattingStyleListRef.current = [];
@@ -222,16 +217,16 @@ export function TextSelectionProvider({
       );
 
     console.log(
-      "   setupSelectedStyle >> selectedNodeFormattingStyleListRef",
+      "   setupSelectedStyle >> selectedNodeFormattingStyleList",
       selectedNodeFormattingStyleListRef.current
     );
     console.log(
-      "   setupSelectedStyle >> commonFormattingRef",
+      "   setupSelectedStyle >> commonFormatting",
       commonFormattingRef.current
     );
   };
 
-  const closeTextSelectionAction = () => {
+  const hideTextFormattingActionMenu = () => {
     if (!TextSelectionActionsRef.current) return;
 
     const TextSelectionActions = TextSelectionActionsRef.current;
@@ -241,7 +236,7 @@ export function TextSelectionProvider({
 
     TextSelectionActions.style.opacity = "0";
     TextSelectionActions.style.pointerEvents = "none";
-    window.removeEventListener("mousedown", closeTextSelectionAction);
+    window.removeEventListener("mousedown", hideTextFormattingActionMenu);
   };
 
   const applyRemoveFormatting = (formatting: FormattingT) => {
@@ -269,7 +264,7 @@ export function TextSelectionProvider({
       }
     }
 
-    setupSelectedStyle();
+    setup();
     mergeEqualStyleElements();
 
     // update 'pageContent' with changed item
@@ -781,11 +776,11 @@ export function TextSelectionProvider({
         formattingActionBtnRefs,
         inputIdRef,
         TextSelectionActionsRef,
-        showTextSelectionAction,
+        showTextSelectionAction: showTextFormattingActionMenu,
         onChangeBlockIndexRef,
-        closeTextSelectionAction,
+        closeTextSelectionAction: hideTextFormattingActionMenu,
         commonFormattingRef,
-        setupSelectedStyle,
+        setupSelectedStyle: setup,
         selectedNodeFormattingStyleListRef,
         applyRemoveFormatting,
       }}
