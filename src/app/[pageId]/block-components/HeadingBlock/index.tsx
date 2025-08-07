@@ -78,8 +78,8 @@ export function HeadingBlock(props: HeadingContentProps) {
         applyFocus(props.item.id);
       }}
     >
-      <div className="relative" onClick={(e) => e.stopPropagation()}>
-        <BlockContentWrapper blockIndex={props.index}>
+      <BlockContentWrapper blockIndex={props.index}>
+        <div className="relative" onClick={(e) => e.stopPropagation()}>
           <BlockInput
             ref={inputRef}
             className={twMerge("font-bold", headingItemData.className)}
@@ -91,8 +91,8 @@ export function HeadingBlock(props: HeadingContentProps) {
             onPressedEnterAtEnd={handleOnPressedEnterAtEnd}
             onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
           />
-        </BlockContentWrapper>
-      </div>
+        </div>
+      </BlockContentWrapper>
     </div>
   );
 }

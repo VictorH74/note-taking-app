@@ -24,7 +24,6 @@ export function TextFormattingActionMenu() {
           />
         ))}
       </div>
-      {/* TODO: fix color picker component position and display */}
       {hook.colorPickerPos && <ColorPicker position={hook.colorPickerPos} />}
     </div>
   );

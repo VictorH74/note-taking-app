@@ -18,11 +18,16 @@ export const useTextFormattingActionMenu = () => {
     commonFormattingRef,
     applyRemoveFormatting,
     formattingActionBtnRefs,
+    onHideFActionMenuListener,
   } = useTextSelection();
   const { pageContent } = usePageContent();
   const [colorPickerPos, setColorPickerPos] = React.useState<PositionT | null>(
     null
   );
+
+  React.useEffect(() => {
+    onHideFActionMenuListener(() => setColorPickerPos(null));
+  }, []);
 
   const actionBtnDataList = React.useMemo<ActionBtnDataListT[]>(
     () => [
@@ -88,8 +93,8 @@ export const useTextFormattingActionMenu = () => {
         className:
           "uppercase font-medium flex justify-center items-center px-3 relative",
         onClick: (e) => {
-          const { left, top } = e.currentTarget.getBoundingClientRect();
-          setColorPickerPos({ left, top });
+          const { left, height } = e.currentTarget.getBoundingClientRect();
+          setColorPickerPos({ left, top: height });
         },
         ref: (el) => {
           formattingActionBtnRefs.current.color = el;

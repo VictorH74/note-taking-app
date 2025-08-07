@@ -24,9 +24,34 @@ export const setInputUrlClickHandler = (inputEl: HTMLElement, href: string) => {
 
 export const sanitizeText = (text: string) => {
   return sanitizeHtml(text, {
-    allowedTags: ["span", "br"],
+    allowedTags: ["span", "br", "a", "img"],
     allowedAttributes: {
       span: ["style", "class", "id"],
+      a: ["style", "class", "id", "href"],
+      img: ["style", "class", "src", "alt"],
+    },
+    allowedStyles: {
+      "*": {
+        "font-weight": [/^(bold|normal|700|600)$/],
+        "font-style": [/^(italic|normal|700|600)$/],
+        color: [/^oklch\([0-9.% ,]*\)/],
+        "background-color": [/^oklch\([0-9.% ,]*\)/],
+        "text-decoration-line": [/[a-z-]*/],
+        "text-decoration": [/[a-z-]*/],
+        width: [/^([0-9]{1,4}px|[\d]{1,2}(.[\d]{1,2}|)(rem|em))$/],
+        height: [/^([0-9]{1,4}px|[\d]{1,2}(.[\d]{1,2}|)(rem|em))$/],
+        "border-bottom": [
+          /^([0-9]{1,4}px|[\d]{1,2}(.[\d]{1,2}|)(rem|em)) [a-z]*$/,
+        ],
+        "border-radius": [/^#[0-9]{0-3}(px|rem|em)$/],
+        "vertical-align": [
+          /^(-|)([0-9]{1,4}px|[\d]{1,2}(.[\d]{1,2}|)(rem|em))$/,
+        ],
+        "margin-inline-end": [
+          /^(-|)([0-9]{1,4}px|[\d]{1,2}(.[\d]{1,2}|)(rem|em))$/,
+        ],
+        display: [/^[a-z]*/],
+      },
     },
   });
 };

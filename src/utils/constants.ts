@@ -39,7 +39,7 @@ export const FORMATTING_NAME_LIST = [
 ] as const;
 
 export const FORMATTING_STYLE: Record<FormattingT, `${string}:${string};`[]> = {
-  bold: ["font-weight:bold;", "font-weight:600;"],
+  bold: ["font-weight:bold;", "font-weight:600;", "font-weight:700;"],
   italic: ["font-style:italic;"],
   "strike-through": [
     "text-decoration-line:line-through;",

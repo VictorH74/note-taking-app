@@ -19,11 +19,18 @@ export function EditableContentListPage(
   const hook = useEditableContentList(props);
 
   return (
-    <div className="min-h-screen w-full grid place-items-center ">
-      <div className="w-full min-h-screen grid place-items-center px-24">
+    <div
+      id="editable-content-list-page"
+      className="min-h-screen w-full grid place-items-center"
+    >
+      <div
+        id=""
+        className="w-full min-h-screen grid place-items-center px-24 overflow-x-hidden"
+      >
         <main
+          id="page-content-container"
           className={twMerge(
-            "h-[calc(100vh-40px)] w-full p-6 m-auto pt-20",
+            "min-h-[calc(100vh-40px)] w-full p-6 m-auto pt-20 relative",
             fullScreen ? "" : "max-w-3xl"
           )}
         >
