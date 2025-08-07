@@ -14,6 +14,14 @@ export const replaceTextColorStyle = (styles: string, colorStyle: string) => {
   return styles.replaceAll(/(^color:[^;]*(;|)|[^-]color:[^;]*)/g, colorStyle);
 };
 
+export const setInputUrlClickHandler = (inputEl: HTMLElement, href: string) => {
+  const a = document.createElement("a");
+  a.href = href;
+  a.target = "_blank";
+  inputEl.blur();
+  a.click();
+};
+
 export const sanitizeText = (text: string) => {
   return sanitizeHtml(text, {
     allowedTags: ["span", "br"],
