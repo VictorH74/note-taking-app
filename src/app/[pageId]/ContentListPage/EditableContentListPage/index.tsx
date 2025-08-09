@@ -10,8 +10,8 @@ import {
   useEditableContentList,
 } from "./useEditableContentList";
 import { sanitizeText } from "@/utils/functions";
-import { TextSelectionContainer } from "../components/TextSelectionContainer";
-import { BlockActionsProvider } from "../components/BlockActionsProvider";
+import { TextSelectionContainer } from "../../../../components/TextSelectionContainer";
+import { BlockActionsProvider } from "../../../../components/BlockActionsProvider";
 
 export function EditableContentListPage(
   props: ContentListPageEditableChildrenProps

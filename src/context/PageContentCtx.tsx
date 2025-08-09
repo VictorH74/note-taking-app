@@ -45,13 +45,14 @@ interface ContentListCtxProps {
   addNewListItemBlock(
     type: ListItemTypeT,
     indent?: number,
-    newIndex?: number
+    newIndex?: number,
+    replace?: boolean
   ): void;
-  addNewHeadingBlock: (type: HeadingItemTypeT, newIndex?: number) => void;
-  addHeadingBlock(
-    type: "heading1" | "heading2" | "heading3",
-    newIndex?: number
-  ): void;
+  addNewHeadingBlock: (
+    type: HeadingItemTypeT,
+    newIndex?: number,
+    replace?: boolean
+  ) => void;
   addCodeBlock: (
     content?: string,
     language?: string,
@@ -131,7 +132,11 @@ export function PageContentProvider({
     updatePageContent();
   };
 
-  const addHeadingBlock = (type: HeadingItemTypeT, newIndex?: number) => {
+  const addNewHeadingBlock = (
+    type: HeadingItemTypeT,
+    newIndex?: number,
+    replace?: boolean
+  ) => {
     if (!pageContent) return;
 
     const baseData = {
@@ -146,7 +151,7 @@ export function PageContentProvider({
       heading3: baseData as Heading3BlockT,
     };
 
-    addNewBlock(newHeadingBlockByType[type], newIndex);
+    addNewBlock(newHeadingBlockByType[type], newIndex, replace);
   };
 
   const addNewParagraphBlock = (
@@ -163,34 +168,11 @@ export function PageContentProvider({
     addNewBlock(newItem, newIndex, replace);
   };
 
-  const addNewHeadingBlock = (type: HeadingItemTypeT, newIndex?: number) => {
-    const baseData = {
-      text: "",
-      type: type,
-    };
-
-    const newHeadingBlockByType: Record<HeadingItemTypeT, BlockT> = {
-      heading1: {
-        ...baseData,
-        id: `${type}-${Date.now()}`,
-      } as Heading1BlockT,
-      heading2: {
-        ...baseData,
-        id: `${type}-${Date.now()}`,
-      } as Heading2BlockT,
-      heading3: {
-        ...baseData,
-        id: `${type}-${Date.now()}`,
-      } as Heading3BlockT,
-    };
-
-    addNewBlock(newHeadingBlockByType[type], newIndex);
-  };
-
   function addNewListItemBlock(
     type: ListItemTypeT,
     indent?: number,
-    newIndex?: number
+    newIndex?: number,
+    replace?: boolean
   ) {
     const baseData = {
       id: `${type}-${Date.now()}`,
@@ -212,7 +194,7 @@ export function PageContentProvider({
       } as BulletListItemBlockT,
     };
 
-    addNewBlock(newListItemBlockByType[type], newIndex);
+    addNewBlock(newListItemBlockByType[type], newIndex, replace);
   }
 
   const addCodeBlock = (
@@ -297,7 +279,6 @@ export function PageContentProvider({
         changePageContentBlockListItem,
         setPageContent,
         addNewListItemBlock,
-        addHeadingBlock,
         addCodeBlock,
         removeBlock,
         reorderBlockList,

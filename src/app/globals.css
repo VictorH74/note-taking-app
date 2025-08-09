@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  --animate-fade-in-scale-forwards: fade-in-scale-forwards 250ms forwards
+    ease-out;
+  @keyframes fade-in-scale-forwards {
+    0% {
+      opacity: 0;
+      translate: -2% -2%;
+    }
+    100% {
+      opacity: 1;
+      translate: 0 0;
+    }
+  }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
@@ -33,18 +48,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.drop-area {
-  &:hover {
-    & div {
-      background-color: #76e6a4;
-    }
+.scrollbar {
+  &::-webkit-scrollbar {
+    @apply bg-transparent w-2;
   }
-}
-
-.block-wrapper {
-  &:hover {
-    & .block-wrapper-actions {
-      opacity: 100;
-    }
+  &::-webkit-scrollbar-thumb {
+    @apply bg-gray-500 rounded-full;
   }
 }

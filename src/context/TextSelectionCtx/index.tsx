@@ -2,7 +2,6 @@ import { usePageContent } from "@/hooks/usePageContent";
 import {
   FORMATTING_STYLE,
   FormattingT,
-  TextFormattingT,
   BgColorFormattingT,
   TextColorFormattingT,
 } from "@/utils/constants";
@@ -16,25 +15,20 @@ import {
 } from "@/utils/functions";
 import React from "react";
 import { MergedNodeList } from "./MergedNodeList";
-import { PositionT } from "@/types/global";
 
 interface TextSelectionCtxProps {
-  TextSelectionActionsRef: React.RefObject<HTMLDivElement | null>;
+  selectedNodeFormattingStyleListRef: React.RefObject<string[] | null>;
+  onChangeBlockIndexRef: React.RefObject<number | null>;
+  commonFormattingRef: React.RefObject<Set<FormattingT> | null>;
+  inputIdRef: React.RefObject<string | null>;
+  selectedRange: Range | null;
   showTextFormattingActionMenu: (
-    selectedRangePos: PositionT,
+    selectedRange: Range,
     onChangeBlockIndex: number,
     inputId: string
   ) => void;
   redefineInputLinksClickHandler: (inputEl: HTMLElement) => void;
-  onChangeBlockIndexRef: React.RefObject<number | null>;
-  inputIdRef: React.RefObject<string | null>;
   hideTextFormattingActionMenu: () => void;
-  commonFormattingRef: React.RefObject<Set<FormattingT> | null>;
-  selectedNodeFormattingStyleListRef: React.RefObject<string[] | null>;
-  setupSelectedStyle: () => void;
-  formattingActionBtnRefs: React.RefObject<
-    Record<TextFormattingT | "color", HTMLButtonElement | null>
-  >;
   applyRemoveFormatting(formatting: FormattingT): void;
   onHideFActionMenuListener(func: () => void): void;
 }
@@ -49,19 +43,11 @@ export function TextSelectionProvider({
 }) {
   const onChangeBlockIndexRef = React.useRef<number | null>(null);
   const inputIdRef = React.useRef<string | null>(null);
-  const TextSelectionActionsRef = React.useRef<HTMLDivElement>(null);
   const commonFormattingRef = React.useRef<Set<FormattingT>>(null);
   const selectedNodeFormattingStyleListRef = React.useRef<Array<string>>(null);
   const onHideFActionMenuListenerList = React.useRef<Array<() => void>>([]);
-  const formattingActionBtnRefs = React.useRef<
-    Record<TextFormattingT | "color", HTMLButtonElement | null>
-  >({
-    bold: null,
-    italic: null,
-    underline: null,
-    "strike-through": null,
-    color: null,
-  });
+
+  const [selectedRange, setSelectedRange] = React.useState<Range | null>(null);
 
   const { pageContent, changePageContentBlockListItem } = usePageContent();
 
@@ -70,181 +56,21 @@ export function TextSelectionProvider({
   };
 
   const showTextFormattingActionMenu = (
-    selectedRangePos: {
-      left: number;
-      top: number;
-    },
+    selectedRange: Range,
     onChangeBlockIndex: number,
     inputId: string
   ) => {
-    if (!TextSelectionActionsRef.current) return;
     onChangeBlockIndexRef.current = onChangeBlockIndex;
     inputIdRef.current = inputId;
 
-    const TextSelectionActions = TextSelectionActionsRef.current;
-    const decreaseLeftNumber = 30;
-
-    TextSelectionActions.style.top =
-      selectedRangePos.top -
-      (TextSelectionActions.getBoundingClientRect().height + 10) +
-      "px";
-    TextSelectionActions.children[0].setAttribute(
-      "style",
-      `margin-left:${
-        selectedRangePos.left - decreaseLeftNumber > 0
-          ? selectedRangePos.left - decreaseLeftNumber
-          : 0
-      }px`
-    );
-    TextSelectionActions.style.opacity = "100%";
-    TextSelectionActions.style.pointerEvents = "all";
-
-    setup();
-
-    window.addEventListener("mousedown", hideTextFormattingActionMenu);
-  };
-
-  const setup = () => {
-    const selection = window.getSelection();
-    if (!selection) return;
-
-    const range = selection.getRangeAt(0);
-
-    // get formatting styles from selected nodes
-    selectedNodeFormattingStyleListRef.current = [];
-    if (range.cloneContents().childNodes.length > 1) {
-      const walker = document.createTreeWalker(
-        range.commonAncestorContainer,
-        NodeFilter.SHOW_TEXT,
-        {
-          acceptNode(node) {
-            return range.intersectsNode(node)
-              ? NodeFilter.FILTER_ACCEPT
-              : NodeFilter.FILTER_REJECT;
-          },
-        }
-      );
-
-      let node;
-      while ((node = walker.nextNode())) {
-        const parent = node.parentElement;
-        const nodeStyle = parent?.getAttribute("style") ?? "";
-
-        selectedNodeFormattingStyleListRef.current.push(nodeStyle);
-      }
-    } else {
-      selectedNodeFormattingStyleListRef.current = [
-        range.startContainer.parentElement?.getAttribute("style") || "",
-      ];
-    }
-
-    // find common styles from selected nodes
-    commonFormattingRef.current = new Set();
-
-    const colorFBtn = (formattingActionBtnRefs.current.color
-      ?.getElementsByClassName("color-formatting-btn")
-      .item(0) ||
-      (() => {
-        throw new Error("Color demo element is null!");
-      })()) as HTMLElement;
-
-    const textColorFormattingPrefix: TextColorFormattingT = "color-";
-    const bgColorFormattingPrefix: BgColorFormattingT = "bg-";
-
-    let hasTextColorFormatting = false;
-    let hasBgColorFormatting = false;
-
-    Object.entries(FORMATTING_STYLE).forEach(([fName, [fStyle]]) => {
-      let count = 0;
-
-      selectedNodeFormattingStyleListRef.current!.forEach((style) => {
-        if (fName.startsWith(textColorFormattingPrefix)) {
-          if (replaceBgColorStyle(style, "").includes(fStyle.replace(/;$/, "")))
-            count++;
-        } else if (style.includes(fStyle.replace(/;$/, ""))) count++;
-      });
-
-      let isCommonFormatting = false;
-
-      if (
-        count > 0 &&
-        count == selectedNodeFormattingStyleListRef.current!.length
-      ) {
-        commonFormattingRef.current!.add(fName as FormattingT);
-        isCommonFormatting = true;
-      }
-
-      // style color formatting button
-      const colorFBtnStyles = colorFBtn.getAttribute("style") || "";
-      if (
-        fName.startsWith(textColorFormattingPrefix) &&
-        isCommonFormatting &&
-        !hasTextColorFormatting
-      ) {
-        colorFBtn.setAttribute(
-          "style",
-          hasExistingTextColorStyle(colorFBtnStyles)
-            ? replaceTextColorStyle(colorFBtnStyles, fStyle)
-            : fStyle.concat(colorFBtnStyles)
-        );
-        hasTextColorFormatting = true;
-      } else if (
-        fName.startsWith(bgColorFormattingPrefix) &&
-        isCommonFormatting &&
-        !hasBgColorFormatting
-      ) {
-        colorFBtn.setAttribute(
-          "style",
-          hasExistingBgColorStyle(colorFBtnStyles)
-            ? replaceBgColorStyle(colorFBtnStyles, fStyle)
-            : fStyle.concat(colorFBtnStyles)
-        );
-        hasBgColorFormatting = true;
-      }
-
-      // highlight text formatting buttons
-      const fActionBtnRef =
-        formattingActionBtnRefs.current[
-          fName as keyof typeof formattingActionBtnRefs.current
-        ];
-
-      if (!!fActionBtnRef)
-        fActionBtnRef.style.color = isCommonFormatting ? "#6479f0" : "#eeeeee";
-    });
-
-    if (!hasTextColorFormatting)
-      colorFBtn.setAttribute(
-        "style",
-        replaceTextColorStyle(colorFBtn.getAttribute("style") || "", "")
-      );
-    if (!hasBgColorFormatting)
-      colorFBtn.setAttribute(
-        "style",
-        replaceBgColorStyle(colorFBtn.getAttribute("style") || "", "")
-      );
-
-    console.log(
-      "   setupSelectedStyle >> selectedNodeFormattingStyleList",
-      selectedNodeFormattingStyleListRef.current
-    );
-    console.log(
-      "   setupSelectedStyle >> commonFormatting",
-      commonFormattingRef.current
-    );
+    setSelectedRange(selectedRange);
   };
 
   const hideTextFormattingActionMenu = () => {
-    if (!TextSelectionActionsRef.current) return;
-
-    const TextSelectionActions = TextSelectionActionsRef.current;
-
     selectedNodeFormattingStyleListRef.current = [];
     commonFormattingRef.current = new Set();
 
-    TextSelectionActions.style.opacity = "0";
-    TextSelectionActions.style.pointerEvents = "none";
-    onHideFActionMenuListenerList.current.forEach((func) => func());
-    window.removeEventListener("mousedown", hideTextFormattingActionMenu);
+    setSelectedRange(null);
   };
 
   const applyRemoveFormatting = (formatting: FormattingT) => {
@@ -272,8 +98,8 @@ export function TextSelectionProvider({
       }
     }
 
-    setup();
-    mergeNodesByFStyle();
+    const newRange = mergeNodesByFStyle();
+    if (newRange) setSelectedRange(newRange);
 
     // update 'pageContent' with changed item
     const blockId = pageContent?.blockList[onChangeBlockIndexRef.current!].id;
@@ -393,6 +219,8 @@ export function TextSelectionProvider({
     }
 
     redefineInputLinksClickHandler(blockInputEl as HTMLElement);
+
+    return range.cloneRange();
   };
 
   const redefineInputLinksClickHandler = (inputEl: HTMLElement) => {
@@ -720,15 +548,13 @@ export function TextSelectionProvider({
     <TextSelectionCtx.Provider
       value={{
         onHideFActionMenuListener,
-        formattingActionBtnRefs,
         inputIdRef,
-        TextSelectionActionsRef,
         redefineInputLinksClickHandler,
         showTextFormattingActionMenu,
+        selectedRange,
         onChangeBlockIndexRef,
         hideTextFormattingActionMenu,
         commonFormattingRef,
-        setupSelectedStyle: setup,
         selectedNodeFormattingStyleListRef,
         applyRemoveFormatting,
       }}

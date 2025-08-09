@@ -13,15 +13,15 @@ import {
   TableBlockT,
 } from "@/types/page";
 import React from "react";
-import { ParagraphBlock } from "../../block-components/ParagraphBlock";
-import { CodeBlock } from "../../block-components/CodeBlock";
-import { BulletListItemBlock } from "../../block-components/BulletListItemBlock";
-import { TableBlock } from "../../block-components/TableBlock";
+import { ParagraphBlock } from "../../components/blocks/ParagraphBlock";
+import { CodeBlock } from "../../components/blocks/CodeBlock";
+import { BulletListItemBlock } from "../../components/blocks/BulletListItemBlock";
+import { TableBlock } from "../../components/blocks/TableBlock";
 import { usePageContent } from "@/hooks/usePageContent";
 import { BlockListType } from "@/context/PageContentCtx";
-import { CheckListItemBlock } from "../../block-components/CheckListItemBlock";
-import { HeadingBlock } from "../../block-components/HeadingBlock";
-import { NumberedListItemBlock } from "../../block-components/NumberedListItemBlock";
+import { CheckListItemBlock } from "../../components/blocks/CheckListItemBlock";
+import { HeadingBlock } from "../../components/blocks/HeadingBlock";
+import { NumberedListItemBlock } from "../../components/blocks/NumberedListItemBlock";
 import { applyFocus } from "@/utils/functions";
 
 export interface ContentListPageEditableChildrenProps {

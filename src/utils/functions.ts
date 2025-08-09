@@ -1,4 +1,9 @@
-import { FORMATTING_STYLE, FormattingT } from "./constants";
+import {
+  BLOCK_INPUT_CLASSNAME,
+  FORMATTING_STYLE,
+  FormattingT,
+  INLINE_LINK_PREVIEW_CLASSNAME,
+} from "./constants";
 import sanitizeHtml from "sanitize-html";
 
 export const hasExistingBgColorStyle = (styles: string) => {
@@ -84,29 +89,15 @@ export const applyFocus = (id: string, at: "start" | "end" = "end") => {
     if (!element || !selection) return;
 
     const range = document.createRange();
-    const el = element.getElementsByClassName("block-input").item(0);
+    const el = element.getElementsByClassName(BLOCK_INPUT_CLASSNAME).item(0);
     if (!el) return;
 
-    if (el.childNodes.length > 0) {
-      const caretPosData: Record<
-        typeof at,
-        { node: ChildNode; offset: number }
-      > = {
-        start: {
-          node: el.firstChild!,
-          offset: 0,
-        },
-        end: {
-          node: el.lastChild!,
-          offset: el.lastChild!.textContent?.length || 0,
-        },
-      };
-      const { node, offset } = caretPosData[at];
-
-      range.setStart(
-        node.nodeType == Node.ELEMENT_NODE ? node.firstChild! : node,
-        offset
-      );
+    if (
+      at == "end" &&
+      el.childNodes.length > 0 &&
+      !(el.childNodes.length == 1 && !el.childNodes.item(0).textContent)
+    ) {
+      range.setStartAfter(el.lastChild!);
       range.collapse(true);
 
       selection.removeAllRanges();
@@ -118,19 +109,20 @@ export const applyFocus = (id: string, at: "start" | "end" = "end") => {
   }, 0);
 };
 
-export const applyFocusByIndex = (id: string, offset: number) => {
-  const element = document.getElementById(id);
-  const selection = window.getSelection();
-  if (!element || !selection) return;
+export const isInlineLinkPreviewNode = (node: Node) => {
+  if (
+    node.nodeType == Node.ELEMENT_NODE &&
+    (node as HTMLElement).classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)
+  )
+    return true;
+  return false;
+};
 
-  const range = document.createRange();
-  const el = element.getElementsByClassName("block-input").item(0);
-  if (!el) return;
-
-  if (el.childNodes.length > 0) {
+export const getNodeFromIndex = (elementNode: Node, offset: number) => {
+  if (elementNode.childNodes.length > 0) {
     let targetNode: ChildNode | null = null;
-    for (let i = 0; i < el.childNodes.length; i++) {
-      const node = el.childNodes[i];
+    for (let i = 0; i < elementNode.childNodes.length; i++) {
+      const node = elementNode.childNodes[i];
       const nodeTextLength = node.textContent?.length || 0;
 
       if (nodeTextLength >= offset) {
@@ -140,17 +132,44 @@ export const applyFocusByIndex = (id: string, offset: number) => {
       offset -= nodeTextLength;
     }
 
-    if (!targetNode) {
+    if (targetNode) return { node: targetNode, offset };
+  }
+
+  return null;
+};
+
+export const applyFocusByIndex = (elementId: string, offset: number) => {
+  const element = document.getElementById(elementId);
+  const selection = window.getSelection();
+  if (!element || !selection) return;
+
+  const range = document.createRange();
+  const el = element.getElementsByClassName(BLOCK_INPUT_CLASSNAME).item(0);
+  if (!el) return;
+
+  if (el.childNodes.length > 0) {
+    const data = getNodeFromIndex(el, offset);
+
+    let targetNode: ChildNode;
+    if (data) {
+      targetNode = data.node;
+      offset = data.offset;
+    } else {
       targetNode = el.lastChild!;
       offset = el.lastChild!.textContent?.length || 0;
     }
 
-    range.setStart(
-      targetNode.nodeType == Node.ELEMENT_NODE
-        ? targetNode.firstChild!
-        : targetNode,
-      offset
-    );
+    if (isInlineLinkPreviewNode(targetNode)) {
+      range.setStartAfter(targetNode);
+    } else {
+      range.setStart(
+        targetNode.nodeType == Node.ELEMENT_NODE
+          ? targetNode.firstChild!
+          : targetNode,
+        offset
+      );
+    }
+
     range.collapse(true);
 
     selection.removeAllRanges();
