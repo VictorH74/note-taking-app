@@ -6,17 +6,18 @@ import {
 } from "./constants";
 import sanitizeHtml from "sanitize-html";
 
+export const hasExistingTextColorStyle = (styles: string) => {
+  return styles.match(new RegExp(/(([^-])color|^color):[^;]*;/));
+};
+export const replaceTextColorStyle = (styles: string, colorStyle: string) => {
+  return styles.replace(/(([^-])color|^color):[^;]*;/, "$2".concat(colorStyle));
+};
+
 export const hasExistingBgColorStyle = (styles: string) => {
   return styles.match(new RegExp(/background-color:[^;]*(;|)/));
 };
-export const hasExistingTextColorStyle = (styles: string) => {
-  return styles.match(new RegExp(/(^color:[^;]*(;|)|[^-]color:[^;]*)/));
-};
 export const replaceBgColorStyle = (styles: string, bgColorStyle: string) => {
   return styles.replaceAll(/background-color:[^;]*(;|)/g, bgColorStyle);
-};
-export const replaceTextColorStyle = (styles: string, colorStyle: string) => {
-  return styles.replaceAll(/(^color:[^;]*(;|)|[^-]color:[^;]*)/g, colorStyle);
 };
 
 export const setInputUrlClickHandler = (inputEl: HTMLElement, href: string) => {

@@ -193,7 +193,16 @@ export const useBlockInput = ({
         }
       },
       ArrowUp: () => {
-        const caretTop = range.getBoundingClientRect().y;
+        const isFirstBlockItem = props.inputBlockIndex == 0;
+
+        if (textContent.length == 0 && !isFirstBlockItem) {
+          applyFocusByIndex(
+            pageContent!.blockList[props.inputBlockIndex - 1].id,
+            caretIndex
+          );
+          e.preventDefault();
+          return;
+        }
 
         let { firstChild } = e.currentTarget;
         if (!firstChild) return;
@@ -203,9 +212,11 @@ export const useBlockInput = ({
 
         const tempRange = document.createRange();
         tempRange.setStart(firstChild, 0);
+
+        const caretTop = range.getBoundingClientRect().y;
         const startTop = tempRange.getBoundingClientRect().y;
 
-        if (caretTop == startTop && props.inputBlockIndex > 0) {
+        if (caretTop == startTop && !isFirstBlockItem) {
           applyFocusByIndex(
             pageContent!.blockList[props.inputBlockIndex - 1].id,
             caretIndex
@@ -214,7 +225,17 @@ export const useBlockInput = ({
         }
       },
       ArrowDown: () => {
-        const caretTop = range.getBoundingClientRect().y;
+        const isLastBlockItem =
+          props.inputBlockIndex == pageContent!.blockList.length - 1;
+
+        if (textContent.length == 0 && !isLastBlockItem) {
+          applyFocusByIndex(
+            pageContent!.blockList[props.inputBlockIndex + 1].id,
+            caretIndex
+          );
+          e.preventDefault();
+          return;
+        }
 
         const getLastChildNode = (node: ChildNode) => {
           if (node.nodeType == Node.ELEMENT_NODE && node.lastChild)
@@ -231,14 +252,11 @@ export const useBlockInput = ({
 
         const tempRange = document.createRange();
         tempRange.setStart(lastChild, lastChild.textContent?.length || 0);
+
+        const caretTop = range.getBoundingClientRect().y;
         const endTop = tempRange.getBoundingClientRect().y;
 
-        console.log(lastChild, caretTop, endTop);
-
-        if (
-          caretTop == endTop &&
-          props.inputBlockIndex < pageContent!.blockList.length - 1
-        ) {
+        if (caretTop == endTop && !isLastBlockItem) {
           applyFocusByIndex(
             pageContent!.blockList[props.inputBlockIndex + 1].id,
             caretIndex
@@ -251,7 +269,6 @@ export const useBlockInput = ({
     if (e.key in keyAction) keyAction[e.key as keyof typeof keyAction]();
   };
 
-  // TODO: implement feature to set caret to a inline url preview
   const handleSelect = () => {
     console.log("on select");
     const sel = window.getSelection();
@@ -310,6 +327,7 @@ export const useBlockInput = ({
       return;
     }
 
+    // TODO: open add block modal using '/' char
     // if (text.endsWith("/")) {
     //   setShowAddBlockModal(true);
     // }

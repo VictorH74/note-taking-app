@@ -352,7 +352,6 @@ export function TextSelectionProvider({
       }
 
       const getSlicedText = makeGetSlicedText(parentText);
-
       const cloneNodeWithData = makeCloneNodeWithData(parentEl);
 
       const frag = document.createDocumentFragment();

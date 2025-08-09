@@ -2,6 +2,8 @@ import React from "react";
 import AddIcon from "@mui/icons-material/Add";
 import DragIndicatorIcon from "@mui/icons-material/DragIndicator";
 import { useBlockActions } from "@/components/BlockActionsProvider";
+import { twMerge } from "tailwind-merge";
+import { BLOCK_ACTIONS_CLASSNAME } from "@/utils/constants";
 
 interface BlockActionsProps {
   blockIndex: number;
@@ -14,7 +16,10 @@ export function BlockActions(props: BlockActionsProps) {
   return (
     <div
       ref={actionBtnsRef}
-      className="absolute -left-24 top-0 w-24 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+      className={twMerge(
+        "absolute -left-24 top-0 w-24 flex items-center justify-center opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+        BLOCK_ACTIONS_CLASSNAME
+      )}
     >
       <button
         className="px-2 py-1"

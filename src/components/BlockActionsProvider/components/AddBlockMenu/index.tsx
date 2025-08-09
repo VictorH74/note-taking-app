@@ -4,6 +4,7 @@ import {
 } from "@/app/[pageId]/components/AddBlockModal";
 import { usePageContent } from "@/hooks/usePageContent";
 import { PositionT } from "@/types/global";
+import { BLOCK_ACTIONS_CLASSNAME } from "@/utils/constants";
 import React from "react";
 import { createPortal } from "react-dom";
 
@@ -40,7 +41,7 @@ export function AddBlockMenu({
       ?.getElementsByClassName("add-block-inpt-container")
       .item(0);
     const blockActions = blockEl
-      ?.getElementsByClassName("block-actions")
+      ?.getElementsByClassName(BLOCK_ACTIONS_CLASSNAME)
       .item(0);
 
     if (!addBlockInptContainer || !blockActions) return;

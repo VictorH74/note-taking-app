@@ -66,7 +66,7 @@ export const usePageContentFetch = (pageId: string) => {
             {
               id: "bulletlistitem-2",
               type: "bulletlistitem",
-              text: 'Sample <span style="background-color:oklch(71.8% 0.202 349.761)">List</span> Item 2',
+              text: 'Sample <span style="background-color:oklch(45.9% 0.187 3.815)">List</span> Item 2',
             },
             {
               id: "numberedlistitem-1",

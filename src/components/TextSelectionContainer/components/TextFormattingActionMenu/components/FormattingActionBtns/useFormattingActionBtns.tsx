@@ -2,7 +2,6 @@ import React from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useTextSelection } from "@/hooks/useTextSelection";
 import { TextFormattingT } from "@/utils/constants";
-import { usePageContent } from "@/hooks/usePageContent";
 import { PositionT } from "@/types/global";
 import {
   BgColorFormattingT,
@@ -10,12 +9,7 @@ import {
   FormattingT,
   TextColorFormattingT,
 } from "@/utils/constants";
-import {
-  hasExistingBgColorStyle,
-  hasExistingTextColorStyle,
-  replaceBgColorStyle,
-  replaceTextColorStyle,
-} from "@/utils/functions";
+import { replaceBgColorStyle } from "@/utils/functions";
 
 type ActionBtnDataListT = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -39,7 +33,6 @@ export const useFormattingActionBtns = () => {
     null
   );
 
-  const { pageContent } = usePageContent();
   const {
     applyRemoveFormatting,
     selectedRange,
@@ -120,14 +113,10 @@ export const useFormattingActionBtns = () => {
         },
       },
     ],
-    [pageContent, applyRemoveFormatting]
+    [applyRemoveFormatting]
   );
 
-  React.useEffect(() => {
-    return setup();
-  }, [selectedRange]);
-
-  const setup = () => {
+  const setup = React.useCallback(() => {
     if (!selectedRange) return;
 
     // get formatting styles from selected nodes
@@ -167,12 +156,10 @@ export const useFormattingActionBtns = () => {
       (() => {
         throw new Error("Color demo element is null!");
       })()) as HTMLElement;
+    colorFBtn.setAttribute("style", "");
 
     const textColorFormattingPrefix: TextColorFormattingT = "color-";
     const bgColorFormattingPrefix: BgColorFormattingT = "bg-";
-
-    let hasTextColorFormatting = false;
-    let hasBgColorFormatting = false;
 
     Object.entries(FORMATTING_STYLE).forEach(([fName, [fStyle]]) => {
       let count = 0;
@@ -196,30 +183,13 @@ export const useFormattingActionBtns = () => {
 
       // style color formatting button
       const colorFBtnStyles = colorFBtn.getAttribute("style") || "";
-      if (
-        fName.startsWith(textColorFormattingPrefix) &&
-        isCommonFormatting &&
-        !hasTextColorFormatting
-      ) {
-        colorFBtn.setAttribute(
-          "style",
-          hasExistingTextColorStyle(colorFBtnStyles)
-            ? replaceTextColorStyle(colorFBtnStyles, fStyle)
-            : fStyle.concat(colorFBtnStyles)
-        );
-        hasTextColorFormatting = true;
+      if (fName.startsWith(textColorFormattingPrefix) && isCommonFormatting) {
+        colorFBtn.setAttribute("style", fStyle.concat(colorFBtnStyles));
       } else if (
         fName.startsWith(bgColorFormattingPrefix) &&
-        isCommonFormatting &&
-        !hasBgColorFormatting
+        isCommonFormatting
       ) {
-        colorFBtn.setAttribute(
-          "style",
-          hasExistingBgColorStyle(colorFBtnStyles)
-            ? replaceBgColorStyle(colorFBtnStyles, fStyle)
-            : fStyle.concat(colorFBtnStyles)
-        );
-        hasBgColorFormatting = true;
+        colorFBtn.setAttribute("style", fStyle.concat(colorFBtnStyles));
       }
 
       // highlight text formatting buttons
@@ -232,17 +202,6 @@ export const useFormattingActionBtns = () => {
         fActionBtnRef.style.color = isCommonFormatting ? "#6479f0" : "#eeeeee";
     });
 
-    if (!hasTextColorFormatting)
-      colorFBtn.setAttribute(
-        "style",
-        replaceTextColorStyle(colorFBtn.getAttribute("style") || "", "")
-      );
-    if (!hasBgColorFormatting)
-      colorFBtn.setAttribute(
-        "style",
-        replaceBgColorStyle(colorFBtn.getAttribute("style") || "", "")
-      );
-
     console.log(
       "   setup >> selectedNodeFormattingStyleList",
       selectedNodeFormattingStyleListRef.current
@@ -254,7 +213,16 @@ export const useFormattingActionBtns = () => {
     return () => {
       window.removeEventListener("mousedown", hideTextFormattingActionMenu);
     };
-  };
+  }, [
+    commonFormattingRef,
+    hideTextFormattingActionMenu,
+    selectedNodeFormattingStyleListRef,
+    selectedRange,
+  ]);
+
+  React.useEffect(() => {
+    return setup();
+  }, [selectedRange, setup]);
 
   return {
     actionBtnDataList,
