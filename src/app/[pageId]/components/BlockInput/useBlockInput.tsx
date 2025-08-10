@@ -49,8 +49,6 @@ export const useBlockInput = ({
     "onClose"
   > | null>(null);
 
-  // const [showAddBlockModal, setShowAddBlockModal] = React.useState(false);
-
   const { addNewParagraphBlock, pageContent, addCodeBlock } = usePageContent();
   const {
     showTextFormattingActionMenu,
@@ -59,17 +57,16 @@ export const useBlockInput = ({
   } = useTextSelection();
 
   React.useEffect(() => {
-    if (props.placeholder) {
-      const input = getInputRef();
-
-      if (!input) return;
-      input.setAttribute("data-placeholder", props.placeholder);
-      input.classList.add(...placeholderClassName.split(" "));
-      if (input.textContent) input.classList.add("after:opacity-0");
-    }
-
     const inputRef = getInputRef();
     if (!inputRef) return;
+
+    setTimeout(() => {
+      if (props.placeholder) {
+        inputRef.setAttribute("data-placeholder", props.placeholder);
+        inputRef.classList.add(...placeholderClassName.split(" "));
+        if (inputRef.textContent) inputRef.classList.add("after:opacity-0");
+      }
+    }, 0);
 
     inputRef.innerHTML = sanitizeText(props.text);
     redefineInputLinksClickHandler(inputRef);
