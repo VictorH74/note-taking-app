@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 import { ListablePageDataT } from "@/types/page";
 import React from "react";
 import { pageService } from "@/services/client-side/PageService";

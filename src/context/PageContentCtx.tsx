@@ -1,3 +1,4 @@
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
 import { pageService } from "@/services/client-side/PageService";
 import {
@@ -99,6 +100,7 @@ export function PageContentProvider({
     }
 
     updatePageContent({ blockList: pageContent.blockList });
+    // TODO: remove eslint-disable and fix the warning
   }, [pageContent]);
 
   const changePageContentTitle = (text: string) => {
