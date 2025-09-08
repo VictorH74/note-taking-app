@@ -1,0 +1,33 @@
+import * as admin from "firebase-admin";
+import { credential } from "firebase-admin";
+import { initializeApp } from "firebase-admin/app";
+import { getFirestore } from "firebase-admin/firestore";
+import { cookies } from "next/headers";
+
+const serviceAccount = JSON.parse(
+  process.env.FIREBASE_SERVICE_ACCOUNT_KEY as string
+);
+
+serviceAccount.private_key = serviceAccount.private_key.replace(/\\n/g, "\n");
+
+if (!admin.apps.length) {
+  initializeApp({
+    credential: credential.cert(serviceAccount as admin.ServiceAccount),
+  });
+}
+
+export const adminDb = getFirestore();
+export const adminSDK = admin;
+export const authAdmin = admin.auth();
+
+export async function getCurrentUser() {
+  const session = (await cookies()).get("session")?.value;
+  if (!session) return null;
+  try {
+    const decoded = await authAdmin.verifySessionCookie(session, true);
+    const user = await authAdmin.getUser(decoded.uid);
+    return user;
+  } catch {
+    return null;
+  }
+}

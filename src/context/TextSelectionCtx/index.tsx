@@ -4,7 +4,7 @@ import {
   FormattingT,
   BgColorFormattingT,
   TextColorFormattingT,
-} from "@/utils/constants";
+} from "@/lib/utils/constants";
 import {
   compareStr,
   hasExistingBgColorStyle,
@@ -12,7 +12,7 @@ import {
   replaceBgColorStyle,
   replaceTextColorStyle,
   setInputUrlClickHandler,
-} from "@/utils/functions";
+} from "@/lib/utils/functions";
 import React from "react";
 import { MergedNodeList } from "./MergedNodeList";
 
