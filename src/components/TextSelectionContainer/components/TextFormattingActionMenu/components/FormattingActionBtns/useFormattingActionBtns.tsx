@@ -1,15 +1,15 @@
 import React from "react";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useTextSelection } from "@/hooks/useTextSelection";
-import { TextFormattingT } from "@/utils/constants";
+import { TextFormattingT } from "@/lib/utils/constants";
 import { PositionT } from "@/types/global";
 import {
   BgColorFormattingT,
   FORMATTING_STYLE,
   FormattingT,
   TextColorFormattingT,
-} from "@/utils/constants";
-import { replaceBgColorStyle } from "@/utils/functions";
+} from "@/lib/utils/constants";
+import { replaceBgColorStyle } from "@/lib/utils/functions";
 
 type ActionBtnDataListT = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,

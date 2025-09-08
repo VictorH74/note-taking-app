@@ -4,7 +4,7 @@ import {
   BG_COLOR_FORMATTING_NAME_LIST,
   FORMATTING_STYLE,
   TEXT_COLOR_FORMATTING_NAME_LIST,
-} from "@/utils/constants";
+} from "@/lib/utils/constants";
 
 interface ColorPickerProps {
   position: PositionT;

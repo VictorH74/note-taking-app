@@ -1,5 +1,5 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
+import { pageService } from "@/services/client-side/PageService";
 import {
   BlockT,
   BlockTypeT,
@@ -15,19 +15,14 @@ import {
   PageContentT,
   ParagraphBlockT,
 } from "@/types/page";
-import { applyFocus } from "@/utils/functions";
+import { applyFocus } from "@/lib/utils/functions";
 import React from "react";
 
 export type BlockListType = PageContentT["blockList"][number];
 
 interface ContentListCtxProps {
   debounceTimeoutRef: React.RefObject<NodeJS.Timeout | null>;
-  contentTitle: string;
-  setContentTitle: React.Dispatch<React.SetStateAction<string>>;
-  contentBlockList: PageContentT["blockList"];
-  setContentBlockList: React.Dispatch<
-    React.SetStateAction<PageContentT["blockList"]>
-  >;
+
   setPageContent: (value: React.SetStateAction<PageContentT | null>) => void;
 
   changePageContentTitle: (text: string) => void;
@@ -36,7 +31,6 @@ interface ContentListCtxProps {
     itemChangedData: Record<string, unknown>
   ): void;
   // applyPageContentChanges: () => void;
-
   addNewParagraphBlock(
     index?: number,
     initialText?: string,
@@ -83,38 +77,35 @@ export function PageContentProvider({
   const [pageContent, setPageContent] = React.useState<PageContentT | null>(
     null
   );
+  const [initialChange, setInitialChange] = React.useState<boolean>(true);
 
-  const [contentTitle, setContentTitle] = React.useState<string>("");
-  const [contentBlockList, setContentBlockList] = React.useState<
-    PageContentT["blockList"]
-  >([]);
-
-  const updatePageContent = async () => {
+  const updatePageContent = (content: Partial<PageContentT>) => {
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current);
     }
 
-    debounceTimeoutRef.current = setTimeout(() => {
-      console.log("Updating content list:", pageContent);
-      // Here you would typically make an API call to update the content list
-      // For example:
-      // await api.updatePageContent(props.pageContentId, {
-      //   itemList: contentBlockList,
-      // });
+    // TODO: use pako to compress content before sending to API
+    debounceTimeoutRef.current = setTimeout(async () => {
+      await pageService.updatePageContent(pageContent!.id, content);
     }, 1000 * 2);
   };
 
   React.useEffect(() => {
     if (!pageContent) return;
 
-    updatePageContent();
+    if (initialChange) {
+      setInitialChange(false);
+      return;
+    }
+
+    updatePageContent({ blockList: pageContent.blockList });
   }, [pageContent]);
 
   const changePageContentTitle = (text: string) => {
     if (!pageContent) return;
 
     pageContent.title = text;
-    updatePageContent();
+    updatePageContent({ title: text });
   };
 
   const changePageContentBlockListItem = (
@@ -129,7 +120,7 @@ export function PageContentProvider({
       ...newItem,
       ...itemChangedData,
     } as BlockListType;
-    updatePageContent();
+    updatePageContent({ blockList: pageContent.blockList });
   };
 
   const addNewHeadingBlock = (
@@ -170,7 +161,7 @@ export function PageContentProvider({
 
   function addNewListItemBlock(
     type: ListItemTypeT,
-    indent?: number,
+    indent: number,
     newIndex?: number,
     replace?: boolean
   ) {
@@ -178,7 +169,7 @@ export function PageContentProvider({
       id: `${type}-${Date.now()}`,
       text: "",
       type: type,
-      indent,
+      indent: indent || null,
     };
 
     const newListItemBlockByType: Record<ListItemTypeT, BlockT> = {
@@ -267,13 +258,9 @@ export function PageContentProvider({
   return (
     <PageContentCtx.Provider
       value={{
-        contentBlockList,
-        contentTitle,
         pageContent,
         debounceTimeoutRef,
-        setContentBlockList,
         addNewHeadingBlock,
-        setContentTitle,
         addNewParagraphBlock,
         changePageContentTitle,
         changePageContentBlockListItem,

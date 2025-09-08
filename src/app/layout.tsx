@@ -27,6 +27,7 @@ export default function RootLayout({
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
+        <div className="not-logged-user-header-container"></div>
         {children}
       </body>
     </html>

@@ -1,0 +1,66 @@
+"use client";
+import { usePageContentFetch } from "@/hooks/usePageContentFetch";
+import { PageContentT } from "@/types/page";
+import { PageContentContainer } from "../ContentListPageBase";
+import { twMerge } from "tailwind-merge";
+import {
+  fullScreen,
+  generateItemComponent,
+} from "../EditableContentListPage/useEditableContentList";
+import { sanitizeText } from "@/lib/utils/functions";
+
+interface ReadOnlyContentListPageProps {
+  pageContentId: PageContentT["id"];
+}
+
+export function ReadOnlyContentListPage(props: ReadOnlyContentListPageProps) {
+  const { pageContent, error } = usePageContentFetch(props.pageContentId);
+
+  return (
+    <PageContentContainer className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      {error ? (
+        <p className="text-sm text-red-400 font-semibold">{error}</p>
+      ) : (
+        <div
+          id=""
+          className="w-full min-h-screen grid place-items-center px-24 overflow-x-hidden"
+        >
+          <main
+            id="page-content-container"
+            className={twMerge(
+              "min-h-[calc(100vh-40px)] w-full p-6 m-auto pt-20 relative",
+              fullScreen ? "" : "max-w-3xl"
+            )}
+          >
+            <div onMouseUp={() => {}}>
+              <h1
+                className="text-4xl font-extrabold outline-none"
+                dangerouslySetInnerHTML={{
+                  __html: sanitizeText(pageContent?.title || ""),
+                }}
+              ></h1>
+
+              {pageContent?.blockList.map((item, index) =>
+                generateItemComponent[item.type](item, index)
+              )}
+            </div>
+          </main>
+        </div>
+      )}
+    </PageContentContainer>
+  );
+
+  return (
+    <PageContentContainer className="flex items-center justify-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
+      <main className="flex flex-col gap-[32px] items-center sm:items-start">
+        <h1 className="text-2xl font-bold">
+          Content List Page: {pageContent?.title}
+        </h1>
+        <p className="text-lg">
+          This is a placeholder for content. {pageContent?.blockList.length}{" "}
+          items
+        </p>
+      </main>
+    </PageContentContainer>
+  );
+}

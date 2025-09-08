@@ -1,26 +1,42 @@
-export type PageDataT = {
-  id: string;
-  createdAt: string;
-  updatedAt: string;
+export type PageContentMetadataT = {
   contentId: PageContentT["id"];
   ownerId: string;
-  settings: {
-    allowComments: boolean;
-    allowReactions: boolean;
-    isFullWidth: boolean;
-  };
-  shareSettings: {
-    isPublic: boolean;
-    inviteds: [
-      { userId: string; role: "all" | "editor" | "viewer" | "commenter" }
-    ];
-  };
+  allowComments: boolean;
+  allowReactions: boolean;
+  isPublic: boolean;
+  inviteds: {
+    userId: string;
+    role: "all" | "editor" | "viewer" | "commenter";
+  }[];
 };
+
+// export type ListablePageContentT = {
+//   id: string;
+//   title: string;
+//   parentId: PageContentT["id"] | null;
+//   ownerId: string;
+//   createdAt: string;
+//   updatedAt: string;
+// }
+
+// export type PageContentT = {
+//   blockList: (BlockT & { [k: string]: unknown })[]; // Allow additional properties
+// };
+
+export type ListablePageDataT = Omit<PageContentT, "blockList">;
+
+export type EditablePageContentT = Pick<PageContentT, "title" | "blockList">;
 
 export type PageContentT = {
   id: string;
+  parentId: PageContentT["id"] | null;
+
   title: string;
   blockList: (BlockT & { [k: string]: unknown })[]; // Allow additional properties
+
+  createdAt: string;
+  updatedAt: string;
+  ownerId: string;
 };
 
 export type ListItemTypeT =

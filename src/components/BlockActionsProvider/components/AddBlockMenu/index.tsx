@@ -1,10 +1,11 @@
+// TODO: ???
 import {
   AddBlockModal,
   AddBlockModalHeight,
-} from "@/app/[pageId]/components/AddBlockModal";
+} from "@/app/pages/[pageId]/components/AddBlockModal";
 import { usePageContent } from "@/hooks/usePageContent";
 import { PositionT } from "@/types/global";
-import { BLOCK_ACTIONS_CLASSNAME } from "@/utils/constants";
+import { BLOCK_ACTIONS_CLASSNAME } from "@/lib/utils/constants";
 import React from "react";
 import { createPortal } from "react-dom";
 

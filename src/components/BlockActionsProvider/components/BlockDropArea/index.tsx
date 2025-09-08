@@ -1,5 +1,5 @@
 import { PositionT } from "@/types/global";
-import { BLOCK_ITEM_CLASSNAME } from "@/utils/constants";
+import { BLOCK_ITEM_CLASSNAME } from "@/lib/utils/constants";
 import React from "react";
 import { createPortal } from "react-dom";
 import { twMerge } from "tailwind-merge";
