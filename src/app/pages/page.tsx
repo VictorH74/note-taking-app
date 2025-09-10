@@ -8,10 +8,8 @@ export default async function Pages() {
   if (!loggedUser) redirect("/../auth/login");
 
   return (
-    <div className="w-full grid place-items-center">
-      <button className="cursor-pointer py-3 px-9 duration-200 hover:brightness-110">
-        Create a page
-      </button>
-    </div>
+    <button className="cursor-pointer py-3 px-9 duration-200 hover:brightness-110">
+      Create a page
+    </button>
   );
 }

@@ -1,3 +1,4 @@
+import { PageListStreamObserver } from "@/types/client-api";
 import {
   EditablePageContentT,
   ListablePageDataT,
@@ -6,9 +7,13 @@ import {
 
 export interface IClientApi {
   getListablePageList(ownerId: string): Promise<ListablePageDataT[]>;
+  getListablePageListStream(
+    ownerId: string,
+    observer: PageListStreamObserver
+  ): () => void;
   getPageContent(pageId: string): Promise<PageContentT | null>;
   updatePageContent(
-    pageId: string,
+    pageId: PageContentT["id"],
     content: Partial<EditablePageContentT>
   ): Promise<void>;
   createPage(

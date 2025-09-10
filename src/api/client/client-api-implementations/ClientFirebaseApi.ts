@@ -13,12 +13,14 @@ import {
   doc,
   getDoc,
   getDocs,
+  onSnapshot,
   query,
   setDoc,
   updateDoc,
   where,
 } from "firebase/firestore";
 import { db } from "@/lib/configs/firebase";
+import { PageListStreamObserver } from "@/types/client-api";
 
 export class ClientFirebaseApi implements IClientApi {
   async getListablePageList(ownerId: string): Promise<ListablePageDataT[]> {
@@ -32,6 +34,31 @@ export class ClientFirebaseApi implements IClientApi {
     });
 
     return pages;
+  }
+
+  getListablePageListStream(ownerId: string, observer: PageListStreamObserver) {
+    const q = query(collection(db, "pages"), where("ownerId", "==", ownerId));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
+      snapshot.docChanges().forEach((change) => {
+        const data = {
+          ...change.doc.data(),
+          id: change.doc.id,
+        } as ListablePageDataT;
+
+        if (change.type === "added") {
+          observer.onAdd(data);
+        }
+        if (change.type === "modified") {
+          observer.onChange(data);
+        }
+        if (change.type === "removed") {
+          observer.onRemove(data);
+        }
+      });
+    });
+
+    return unsubscribe;
   }
 
   async getPageContent(pageId: string): Promise<PageContentT | null> {

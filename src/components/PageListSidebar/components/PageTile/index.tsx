@@ -10,11 +10,11 @@ import { pageService } from "@/services/client-side/PageService";
 import { useAuthUser } from "@/hooks/useAuthUser";
 
 interface PageTileProps {
-  pageChildren: Record<string, ListablePageDataT[]>;
+  pageChildren: Record<string, { children: ListablePageDataT[], expanded: boolean }>
   pageId: string;
   title: string;
   childrenIndent?: number;
-  includeNewPage: (page: ListablePageDataT) => void
+  toggleExpandPageChildren: (pageId: string, value: boolean) => void
 }
 
 export function PageTile({
@@ -22,37 +22,37 @@ export function PageTile({
   pageId,
   childrenIndent,
   title,
-  includeNewPage
+  toggleExpandPageChildren
 }: PageTileProps) {
-  const [isExpanded, setIsExpanded] = React.useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const { user } = useAuthUser()
 
   const isActive = React.useMemo(() => {
-    return pathname.includes(pageId);
+    const _isActive = pathname.includes(pageId);
+
+    return _isActive
   }, [pathname, pageId]);
 
   const createChildPage = async () => {
     const newPage = await pageService.createPage(user!.email!, pageId)
-    includeNewPage(newPage)
     router.push(`/pages/${newPage.id}`);
   }
 
   return (
-    <div className="" style={{ marginLeft: 10 * (childrenIndent || 0) }}>
+    <div style={{ marginLeft: 10 * (childrenIndent || 0) }}>
       <div className="flex items-center group/tile">
         <div className="flex items-center w-full">
           <button
-            className={twMerge("relative p-2")}
-            onClick={() => setIsExpanded(!isExpanded)}
+            className={twMerge("relative p-1")}
+            onClick={() => toggleExpandPageChildren(pageId, !pageChildren[pageId].expanded)}
           >
             <DescriptionIcon sx={{ color: "#919191", fontSize: 20 }} className={twMerge(!!pageChildren[pageId] ? 'group-hover/tile:opacity-0 duration-200' : '')} />
             {
               !!pageChildren[pageId] && (
                 <span className="absolute inset-0 opacity-0 group-hover/tile:opacity-100 duration-200 grid place-items-center">
                   <KeyboardArrowRightIcon
-                    className={twMerge(isExpanded ? "rotate-90" : "")}
+                    className={twMerge(pageChildren[pageId].expanded ? "rotate-90" : "")}
                     sx={{ color: "#919191", fontSize: 25 }}
                   />
                 </span>
@@ -75,9 +75,9 @@ export function PageTile({
         </div>
 
         <div className="flex items-center group-hover/tile:opacity-100 opacity-0 duration-200">
-          <button className="p-2 relative group/more-opt-btn"><MoreHorizIcon className="group-hover/more-opt-btn:bg-zinc-700 duration-200 rounded-md" /></button>
+          <button className="p-1 relative group/more-opt-btn"><MoreHorizIcon className="group-hover/more-opt-btn:bg-zinc-700 duration-200 rounded-md" /></button>
           {user?.email && (
-            <button className="p-2 group/add-btn" onClick={async (btn) => {
+            <button className="p-1 group/add-btn" onClick={async (btn) => {
               btn.currentTarget.disabled = true
               createChildPage()
             }}><AddIcon className="group-hover/add-btn:bg-zinc-700 duration-200 rounded-md" /></button>
@@ -86,15 +86,15 @@ export function PageTile({
         </div>
       </div>
       {pageChildren[pageId] &&
-        isExpanded &&
-        pageChildren[pageId].map((page) => (
+        pageChildren[pageId].expanded &&
+        pageChildren[pageId].children.map((page) => (
           <PageTile
             key={page.id}
             pageChildren={pageChildren}
             pageId={page.id}
             title={page.title}
             childrenIndent={1}
-            includeNewPage={includeNewPage}
+            toggleExpandPageChildren={toggleExpandPageChildren}
           />
         ))}
     </div>

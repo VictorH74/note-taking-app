@@ -13,7 +13,6 @@ export const metadata: Metadata = {
   title: "Pages",
 };
 
-// TODO: show anonimous user header: <NoLoggedUserHeader />
 export default async function Page({
   params,
 }: {

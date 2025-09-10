@@ -1,5 +1,6 @@
 import { ClientFirebaseApi } from "@/api/client/client-api-implementations/ClientFirebaseApi";
 import { IClientApi } from "@/api/client/IClientApi";
+import { PageListStreamObserver } from "@/types/client-api";
 import { ListablePageDataT, PageContentT } from "@/types/page";
 
 class PageService {
@@ -9,12 +10,16 @@ class PageService {
     return this.api.getListablePageList(ownerId);
   }
 
+  getListablePageListStream(ownerId: string, observer: PageListStreamObserver) {
+    return this.api.getListablePageListStream(ownerId, observer);
+  }
+
   async getPageContent(pageId: string): Promise<PageContentT | null> {
     return this.api.getPageContent(pageId);
   }
 
   async updatePageContent(
-    pageId: string,
+    pageId: PageContentT["id"],
     content: Partial<PageContentT>
   ): Promise<void> {
     return this.api.updatePageContent(pageId, content);

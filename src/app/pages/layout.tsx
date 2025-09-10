@@ -12,9 +12,11 @@ export default function PagesLayout({
   const { user } = useAuthUser();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex h-screen overflow-y-hidden">
       {user && user.email && <PageListSidebar loggedUserEmail={user.email} />}
-      {children}
+      <div className="h-screen w-full overflow-auto scrollbar grid place-items-center">
+        {children}
+      </div>
     </div>
   );
 }
