@@ -11,6 +11,6 @@ export class ServerFirebaseApi implements IServerApi {
       const data = doc.data() as PageContentMetadataT;
       return { ...data };
     }
-    throw new Error("Not found" + pageId);
+    return null;
   }
 }

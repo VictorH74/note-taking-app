@@ -20,6 +20,7 @@ export interface IClientApi {
     ownerId: PageContentT["ownerId"],
     parentId: PageContentT["parentId"]
   ): Promise<ListablePageDataT>;
+  deletePage(id: PageContentT["id"]): Promise<void>;
   createPageMetadata(
     pageId: PageContentT["id"],
     ownerId: PageContentT["ownerId"]

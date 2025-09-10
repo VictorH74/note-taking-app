@@ -51,6 +51,7 @@ export function PageListSidebar(props: PageListSidebarProps) {
       _pageChildren.root.children.push(page);
     });
 
+    console.count('setPageChildren when pages changes')
     setPageChildren(_pageChildren);
   }, [pages])
 
@@ -62,31 +63,36 @@ export function PageListSidebar(props: PageListSidebarProps) {
     if (pageId === currentPageIdRef.current) return;
     currentPageIdRef.current = pageId
 
-    const obj = pages.reduce<Record<string, ListablePageDataT>>((prevObj, cPage) => {
+    const pageById = pages.reduce<Record<string, ListablePageDataT>>((prevObj, cPage) => {
       prevObj[cPage.id] = cPage;
       return prevObj
     }, {})
 
     while (!!pageId) {
-      const parentId: string | null = obj[pageId].parentId
-      if (parentId) pageChildren[parentId].expanded = true
-      pageId = parentId
+      try {
+        const parentId: string | null = pageById[pageId].parentId
+        if (parentId) pageChildren[parentId].expanded = true
+        pageId = parentId
+      } catch {
+        pageId = null
+      }
+
     }
 
+    console.count('setPageChildren when pathname changes')
     setPageChildren(() => pageChildren)
   }, [pathname, pageChildren])
 
   React.useEffect(() => {
     const unsub = pageService.getListablePageListStream(props.loggedUserEmail, {
       onAdd(data) {
-        console.log('ADDED', data)
         setPages(prev => [...prev, data])
       },
       onChange(data) {
         setPages(prev => prev.map(p => p.id == data.id ? data : p))
       },
       onRemove(data) {
-        setPages(prev => prev.filter(p => p.id == data.id))
+        setPages(prev => prev.filter(p => p.id != data.id))
       },
     })
 

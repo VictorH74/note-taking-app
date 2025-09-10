@@ -10,6 +10,7 @@ import { IClientApi } from "../IClientApi";
 import {
   addDoc,
   collection,
+  deleteDoc,
   doc,
   getDoc,
   getDocs,
@@ -138,6 +139,28 @@ export class ClientFirebaseApi implements IClientApi {
     const createdDoc = await getDoc(ref);
 
     return { ...createdDoc.data(), id: createdDoc.id } as ListablePageDataT;
+  }
+
+  async deletePage(id: PageContentT["id"]): Promise<void> {
+    try {
+      const deletePromises: Promise<void>[] = [
+        deleteDoc(doc(db, "pages", id)),
+        deleteDoc(doc(db, `pages/${id}/blocks`, "data")),
+        deleteDoc(doc(db, `pages-metadata`, id)),
+      ];
+
+      const q = query(collection(db, "pages"), where("parentId", "==", id));
+      const querySnapshot = await getDocs(q);
+
+      if (querySnapshot.size > 0)
+        querySnapshot.docs.forEach((document) =>
+          deletePromises.push(this.deletePage(document.id))
+        );
+
+      await Promise.all(deletePromises);
+    } catch (error) {
+      console.error("Erro ao excluir documentos:", error);
+    }
   }
 
   async createPageMetadata(

@@ -19,6 +19,7 @@ interface AddBlockModalProps {
 
 export const AddBlockModalHeight = 400;
 
+// TODO: use ModalContainer
 export function AddBlockModal({
   addBlockModalPos,
   newBlockIndex,

@@ -32,6 +32,10 @@ class PageService {
     return this.api.createPage(ownerId, parentId);
   }
 
+  async deletePage(id: PageContentT["id"]): Promise<void> {
+    return this.api.deletePage(id);
+  }
+
   async createPageMetadata(
     pageId: PageContentT["id"],
     ownerId: PageContentT["ownerId"]
