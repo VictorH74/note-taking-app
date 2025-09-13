@@ -71,6 +71,8 @@ export default function LoginPage() {
         throw new NullCredentialError();
       }
       const idToken = await result.user.getIdToken();
+      // TODO: use csrfToken
+      // const csrfToken = getCookie('csrfToken')
 
       if (!result.user) {
         throw new NoUserError();
@@ -81,7 +83,7 @@ export default function LoginPage() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ idToken }),
+        body: JSON.stringify({ idToken /* ,csrfToken */ }),
       });
 
       router.replace("/pages");

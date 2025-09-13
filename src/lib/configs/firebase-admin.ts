@@ -22,12 +22,25 @@ export const authAdmin = admin.auth();
 
 export async function getCurrentUser() {
   const session = (await cookies()).get("session")?.value;
+  // console.log("getCurrentUser > SESSION", session);
   if (!session) return null;
   try {
     const decoded = await authAdmin.verifySessionCookie(session, true);
     const user = await authAdmin.getUser(decoded.uid);
+    console.log("getCurrentUser > USER", user);
     return user;
-  } catch {
+  } catch (err) {
+    console.error(err);
     return null;
+  }
+}
+
+export async function verifySession(sessionCookie: string) {
+  try {
+    await authAdmin.verifySessionCookie(sessionCookie!, true);
+    console.log("OK");
+    return true;
+  } catch {
+    return false;
   }
 }

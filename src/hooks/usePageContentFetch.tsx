@@ -16,10 +16,6 @@ export const usePageContentFetch = (pageId: string) => {
 
     const fetchPageContent = async () => {
       try {
-        // TODO: Simulate fetching page content from an API or database
-        // Replace this with actual fetch logic
-
-        // page id placeholder: "content-list-id-placeholder"
         const data = await pageService.getPageContent(pageId);
 
         setPageContent(data);
