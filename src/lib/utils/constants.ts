@@ -71,6 +71,6 @@ export type TextFormattingT = (typeof TEXT_FORMATTING_NAME_LIST)[number];
 export type FormattingT = (typeof FORMATTING_NAME_LIST)[number];
 
 export const BLOCK_INPUT_CLASSNAME = "block-input";
-export const BLOCK_ACTIONS_CLASSNAME = "block-actions";
+export const LEFT_BLOCK_ACTIONS_CLASSNAME = "block-actions";
 export const BLOCK_ITEM_CLASSNAME = "block-item";
 export const INLINE_LINK_PREVIEW_CLASSNAME = "inline-link-preview";

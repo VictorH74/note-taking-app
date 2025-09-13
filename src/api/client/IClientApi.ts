@@ -1,5 +1,6 @@
 import { PageListStreamObserver } from "@/types/client-api";
 import {
+  BlockT,
   EditablePageContentT,
   ListablePageDataT,
   PageContentT,
@@ -24,5 +25,13 @@ export interface IClientApi {
   createPageMetadata(
     pageId: PageContentT["id"],
     ownerId: PageContentT["ownerId"]
+  ): Promise<void>;
+
+  deleteBlock(id: BlockT["id"], pageId: PageContentT["id"]): Promise<void>;
+  createBlock(pageId: PageContentT["id"], item: BlockT): Promise<BlockT["id"]>;
+  updateBlock(
+    id: BlockT["id"],
+    pageId: PageContentT["id"],
+    data: Record<string, unknown>
   ): Promise<void>;
 }

@@ -2,10 +2,10 @@
 import {
   AddBlockModal,
   AddBlockModalHeight,
-} from "@/app/pages/[pageId]/components/AddBlockModal";
+} from "@/app/pages/[pageId]/_components/AddBlockModal";
 import { usePageContent } from "@/hooks/usePageContent";
 import { PositionT } from "@/types/global";
-import { BLOCK_ACTIONS_CLASSNAME } from "@/lib/utils/constants";
+import { LEFT_BLOCK_ACTIONS_CLASSNAME } from "@/lib/utils/constants";
 import React from "react";
 import { createPortal } from "react-dom";
 
@@ -42,7 +42,7 @@ export function AddBlockMenu({
       ?.getElementsByClassName("add-block-inpt-container")
       .item(0);
     const blockActions = blockEl
-      ?.getElementsByClassName(BLOCK_ACTIONS_CLASSNAME)
+      ?.getElementsByClassName(LEFT_BLOCK_ACTIONS_CLASSNAME)
       .item(0);
 
     if (!addBlockInptContainer || !blockActions) return;
@@ -100,7 +100,7 @@ export function AddBlockMenu({
             autoFocus
           />,
           blockEl?.getElementsByClassName("add-block-inpt-container").item(0) ||
-            document.body
+          document.body
         )}
     </>
   );

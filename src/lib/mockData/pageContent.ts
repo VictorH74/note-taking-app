@@ -5,6 +5,7 @@ export const pageContentMock = {
   parentId: "collection-456",
   ownerId: "user-123",
   title: "Sample Page Title",
+  blockSortIdList: [],
   blockList: [
     {
       id: "heading1-1",

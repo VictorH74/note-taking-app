@@ -3,13 +3,10 @@ import { useEffect } from 'react'
 
 export default function Error({
     error,
-    reset,
 }: {
     error: Error & { digest?: string }
-    reset: () => void
 }) {
     useEffect(() => {
-        // Log the error to an error reporting service
         console.error(error)
     }, [error])
 
@@ -18,13 +15,7 @@ export default function Error({
             <main className="text-center space-y-2">
                 <h1 className='text-red-400 text-4xl'>505</h1>
                 <h2 className='text-xl'>Something went wrong!</h2>
-                <button
-                    onClick={
-                        () => reset()
-                    }
-                >
-                    Try again
-                </button>
+                <p>{JSON.stringify(error)}</p>
             </main>
         </div>
     )

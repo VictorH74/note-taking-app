@@ -1,4 +1,4 @@
-/* eslint-disable react-hooks/exhaustive-deps */
+
 "use client";
 import { pageService } from "@/services/client-side/PageService";
 import {
@@ -74,11 +74,11 @@ export function PageContentProvider({
   children: React.ReactNode;
 }) {
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const blockChangeDebounceTimeoutRef = React.useRef<Record<BlockT['id'], NodeJS.Timeout | null>>({});
 
   const [pageContent, setPageContent] = React.useState<PageContentT | null>(
     null
   );
-  const [initialChange, setInitialChange] = React.useState<boolean>(true);
 
   const updatePageContent = (content: Partial<PageContentT>) => {
     if (debounceTimeoutRef.current) {
@@ -91,18 +91,6 @@ export function PageContentProvider({
     }, 1000 * 2);
   };
 
-  React.useEffect(() => {
-    if (!pageContent) return;
-
-    if (initialChange) {
-      setInitialChange(false);
-      return;
-    }
-
-    updatePageContent({ blockList: pageContent.blockList });
-    // TODO: remove eslint-disable and fix the warning
-  }, [pageContent]);
-
   const changePageContentTitle = (text: string) => {
     if (!pageContent) return;
 
@@ -110,19 +98,30 @@ export function PageContentProvider({
     updatePageContent({ title: text });
   };
 
-  const changePageContentBlockListItem = (
+  const changePageContentBlockListItem = async (
     index: number,
     itemChangedData: Record<string, unknown>
   ) => {
     if (!pageContent) return;
 
-    const newItem = pageContent.blockList[index];
+    const block = pageContent.blockList[index];
 
     pageContent.blockList[index] = {
-      ...newItem,
+      ...block,
       ...itemChangedData,
     } as BlockListType;
-    updatePageContent({ blockList: pageContent.blockList });
+
+    if (blockChangeDebounceTimeoutRef.current?.[block.id]) {
+      clearTimeout(blockChangeDebounceTimeoutRef.current[block.id]!);
+    }
+
+    // TODO: use pako to compress content before sending to API
+    blockChangeDebounceTimeoutRef.current[block.id] = setTimeout(async () => {
+      await pageService.updateBlock(pageContent.blockList[index].id, pageContent.id, itemChangedData)
+    }, 1000 * 2);
+
+    console.log(itemChangedData)
+
   };
 
   const addNewHeadingBlock = (
@@ -206,40 +205,89 @@ export function PageContentProvider({
     addNewBlock(data, index, replace);
   };
 
-  const addNewBlock = (item: BlockT, index?: number, replace?: boolean) => {
+  const addNewBlock = async (item: BlockT, index?: number, replace?: boolean) => {
     if (!pageContent) return;
+    const _pageContent = { ...pageContent };
 
-    const temp = { ...pageContent };
+    const newPageBlockSortIdList = _pageContent.blockSortIdList
 
-    temp.blockList.splice(
-      index != undefined ? index : temp.blockList.length,
+    const deletedIds = newPageBlockSortIdList.splice(
+      index != undefined ? index : newPageBlockSortIdList.length,
       replace ? 1 : 0,
-      item as BlockT<BlockTypeT> & { [k: string]: unknown }
+      item.id
     );
 
-    setPageContent(() => temp);
-    applyFocus(item.id, "start");
+    if (deletedIds.length > 0) {
+      const deletedId = deletedIds.at(0)!
+      const toDeleteIndex = _pageContent.blockList.findIndex(blck => blck.id == deletedId)
+      _pageContent.blockList[toDeleteIndex] = item as BlockT<BlockTypeT> & { [k: string]: unknown }
+    } else {
+      _pageContent.blockList.push(item as BlockT<BlockTypeT> & { [k: string]: unknown })
+    }
+
+    const promises: Promise<unknown>[] = [
+      pageService.createBlock(_pageContent.id, item)
+    ]
+
+    if (deletedIds.length > 0) {
+      if (blockChangeDebounceTimeoutRef.current[deletedIds.at(0)!]) {
+        clearTimeout(blockChangeDebounceTimeoutRef.current[deletedIds.at(0)!]!)
+      }
+      promises.push(pageService.deleteBlock(deletedIds.at(0)!, _pageContent.id))
+    }
+
+    promises.push(pageService.updatePageContent(_pageContent.id, { blockSortIdList: newPageBlockSortIdList }))
+
+    // TODO: try / catch
+    Promise.all(promises)
+
+    setPageContent(() => _pageContent);
+
+    setTimeout(() => {
+      applyFocus(item.id, "start");
+    }, 0);
   };
 
-  const removeBlock = (
+  const removeBlock = async (
     index: number,
     focusPrevBlock?: boolean,
     toConcatText?: string
   ) => {
     if (!pageContent) return;
 
-    const temp = { ...pageContent };
+    const _pageContent = { ...pageContent };
+    const newPageBlockSortIdList = _pageContent.blockSortIdList
 
-    temp.blockList.splice(index, 1);
+    const deletedIds = newPageBlockSortIdList.splice(index, 1);
+    const deletedId = deletedIds.at(0)!
+    const toDeleteIndex = _pageContent.blockList.findIndex(blck => blck.id == deletedId)
+
+    _pageContent.blockList.splice(toDeleteIndex, 1);
+
+    if (blockChangeDebounceTimeoutRef.current[deletedId]) {
+      clearTimeout(blockChangeDebounceTimeoutRef.current[deletedId]!)
+    }
+
+    const promises: Promise<void>[] = []
 
     if (toConcatText && index > 0) {
-      const block = temp.blockList[index - 1];
+      const topBlockId = _pageContent.blockSortIdList[index - 1]
+      const block = _pageContent.blockList.find(blck => blck.id == topBlockId)!
       if (!!block.text) {
         block.text += toConcatText;
+        promises.push(pageService.updateBlock(topBlockId, _pageContent.id, { text: block.text }))
       }
     }
 
-    setPageContent(() => temp);
+    promises.push(
+      pageService.deleteBlock(deletedId, _pageContent.id),
+      pageService.updatePageContent(_pageContent.id, { blockSortIdList: newPageBlockSortIdList })
+    )
+
+    // TODO: try / catch
+    Promise.all(promises)
+
+    setPageContent(() => _pageContent);
 
     if (focusPrevBlock && index > 0)
       applyFocus(pageContent.blockList[index - 1].id);
@@ -248,13 +296,19 @@ export function PageContentProvider({
   const reorderBlockList = (index: number, toIndex: number) => {
     if (!pageContent) return;
 
-    const block = pageContent.blockList[index];
+    const _pageContent = { ...pageContent };
 
-    pageContent.blockList.splice(index, 1);
+    const newPageBlockSortIdList = _pageContent.blockSortIdList
+    const blockId = newPageBlockSortIdList[index];
 
     const finalToIndex = index < toIndex && toIndex > 0 ? toIndex - 1 : toIndex;
+    newPageBlockSortIdList.splice(index, 1);
+    newPageBlockSortIdList.splice(finalToIndex, 0, blockId);
 
-    addNewBlock(block, finalToIndex);
+    // TODO: try / catch
+    pageService.updatePageContent(_pageContent.id, { blockSortIdList: newPageBlockSortIdList })
+
+    setPageContent(_pageContent)
   };
 
   return (

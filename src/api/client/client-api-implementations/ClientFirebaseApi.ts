@@ -3,6 +3,7 @@ import {
   PageContentT,
   EditablePageContentT,
   PageContentMetadataT,
+  BlockT,
 } from "@/types/page";
 import { IClientApi } from "../IClientApi";
 // import { listablePageList } from "@/mockData/listablePageList";
@@ -24,6 +25,31 @@ import { db } from "@/lib/configs/firebase";
 import { PageListStreamObserver } from "@/types/client-api";
 
 export class ClientFirebaseApi implements IClientApi {
+  async updateBlock(
+    id: BlockT["id"],
+    pageId: PageContentT["id"],
+    data: Record<string, Partial<unknown>>
+  ): Promise<void> {
+    await updateDoc(doc(db, `pages/${pageId}/blocks`, id), data);
+  }
+
+  async deleteBlock(
+    id: BlockT["id"],
+    pageId: PageContentT["id"]
+  ): Promise<void> {
+    const blockRef = doc(db, `pages/${pageId}/blocks`, id);
+    await deleteDoc(blockRef);
+  }
+
+  async createBlock(
+    pageId: PageContentT["id"],
+    item: BlockT
+  ): Promise<BlockT["id"]> {
+    await setDoc(doc(db, `pages/${pageId}/blocks`, item.id), item);
+
+    return item.id; // TODO: remove return: unnecessary
+  }
+
   async getListablePageList(ownerId: string): Promise<ListablePageDataT[]> {
     const q = query(collection(db, "pages"), where("ownerId", "==", ownerId));
 
@@ -63,8 +89,7 @@ export class ClientFirebaseApi implements IClientApi {
   }
 
   async getPageContent(pageId: string): Promise<PageContentT | null> {
-    const pageRef = doc(db, "pages", pageId); // {id, title, parentId, ownerId, createdAt, updatedAt}
-    const pageContentRef = doc(db, `pages/${pageId}/blocks`, "data"); // {blockList: [...]}
+    const pageRef = doc(db, "pages", pageId);
 
     let page: PageContentT;
 
@@ -74,11 +99,18 @@ export class ClientFirebaseApi implements IClientApi {
         page = pageDocSnap.data() as PageContentT;
         page.id = pageDocSnap.id;
 
-        const pageBlocksDocSnap = await getDoc(pageContentRef);
-        page.blockList = pageBlocksDocSnap.exists()
-          ? pageBlocksDocSnap.data().blockList
-          : [];
-        return page;
+        const querySnapshot = await getDocs(
+          collection(db, `pages/${pageId}/blocks`)
+        );
+
+        const blockList: PageContentT["blockList"] = [];
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data() as PageContentT["blockList"][0];
+          blockList.push({ ...data });
+        });
+
+        return { ...page, blockList };
       }
 
       throw new Error("404 - No such document!");
@@ -104,20 +136,33 @@ export class ClientFirebaseApi implements IClientApi {
       );
     }
 
-    if (content.blockList) {
+    if (content.blockSortIdList) {
       promises.push(
         setDoc(
-          doc(db, `pages/${pageId}/blocks`, "data"),
-          { blockList: content.blockList },
+          doc(db, "pages", pageId),
+          {
+            blockSortIdList: content.blockSortIdList,
+            updatedAt: new Date().toISOString(),
+          },
           { merge: true }
         )
       );
-      promises.push(
-        updateDoc(doc(db, "pages", pageId), {
-          updatedAt: new Date().toISOString(),
-        })
-      );
     }
+
+    // if (content.blockList) {
+    //   promises.push(
+    //     setDoc(
+    //       doc(db, `pages/${pageId}/blocks`, "data"),
+    //       { blockList: content.blockList },
+    //       { merge: true }
+    //     )
+    //   );
+    //   promises.push(
+    //     updateDoc(doc(db, "pages", pageId), {
+    //       updatedAt: new Date().toISOString(),
+    //     })
+    //   );
+    // }
 
     await Promise.all(promises);
   }
@@ -132,6 +177,7 @@ export class ClientFirebaseApi implements IClientApi {
       ownerId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
+      blockSortIdList: [],
     };
 
     const ref = await addDoc(collection(db, "pages"), content);
@@ -141,11 +187,24 @@ export class ClientFirebaseApi implements IClientApi {
     return { ...createdDoc.data(), id: createdDoc.id } as ListablePageDataT;
   }
 
+  async deletePageBlocks(id: PageContentT["id"]) {
+    const querySnapshot = await getDocs(collection(db, `pages/${id}/blocks`));
+
+    const deletePromises: Promise<void>[] = [];
+
+    if (querySnapshot.size > 0)
+      querySnapshot.docs.forEach((document) =>
+        deletePromises.push(this.deletePage(document.id))
+      );
+
+    await Promise.all(deletePromises);
+  }
+
   async deletePage(id: PageContentT["id"]): Promise<void> {
     try {
       const deletePromises: Promise<void>[] = [
         deleteDoc(doc(db, "pages", id)),
-        deleteDoc(doc(db, `pages/${id}/blocks`, "data")),
+        this.deletePageBlocks(id),
         deleteDoc(doc(db, `pages-metadata`, id)),
       ];
 

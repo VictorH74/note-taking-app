@@ -1,7 +1,7 @@
 import { ClientFirebaseApi } from "@/api/client/client-api-implementations/ClientFirebaseApi";
 import { IClientApi } from "@/api/client/IClientApi";
 import { PageListStreamObserver } from "@/types/client-api";
-import { ListablePageDataT, PageContentT } from "@/types/page";
+import { BlockT, ListablePageDataT, PageContentT } from "@/types/page";
 
 class PageService {
   constructor(private api: IClientApi) {}
@@ -41,6 +41,28 @@ class PageService {
     ownerId: PageContentT["ownerId"]
   ): Promise<void> {
     return this.api.createPageMetadata(pageId, ownerId);
+  }
+
+  async updateBlock(
+    id: BlockT["id"],
+    pageId: PageContentT["id"],
+    data: Record<string, unknown>
+  ): Promise<void> {
+    return this.api.updateBlock(id, pageId, data);
+  }
+
+  async deleteBlock(
+    id: BlockT["id"],
+    pageId: PageContentT["id"]
+  ): Promise<void> {
+    return this.api.deleteBlock(id, pageId);
+  }
+
+  async createBlock(
+    pageId: PageContentT["id"],
+    item: BlockT
+  ): Promise<BlockT["id"]> {
+    return this.api.createBlock(pageId, item);
   }
 }
 

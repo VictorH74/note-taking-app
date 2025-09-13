@@ -6,6 +6,7 @@ import { AddBlockMenu } from "./components/AddBlockMenu";
 type BlockActionsCtxT = {
   dragBlock: (blockIndex: number) => void;
   addBlockTriggerBlock: (blockIndex: number) => void;
+  deleteBlock: (blockIndex: number) => void;
 };
 
 const BlockActionsCtx = React.createContext<BlockActionsCtxT | null>(null);
@@ -26,7 +27,7 @@ interface BlockActionsProviderProps {
 }
 
 export function BlockActionsProvider(props: BlockActionsProviderProps) {
-  const { reorderBlockList } = usePageContent();
+  const { reorderBlockList, removeBlock } = usePageContent();
 
   const [draggableBlockIndex, setDraggableBlockIndex] = React.useState<
     number | null
@@ -42,8 +43,10 @@ export function BlockActionsProvider(props: BlockActionsProviderProps) {
     setAddBlockTriggerBlockIndex(blockIndex);
   };
 
+  const deleteBlock = (blockIndex: number) => removeBlock(blockIndex)
+
   return (
-    <BlockActionsCtx.Provider value={{ dragBlock, addBlockTriggerBlock }}>
+    <BlockActionsCtx.Provider value={{ dragBlock, addBlockTriggerBlock, deleteBlock }}>
       {props.children}
       {addBlockTriggerBlockIndex != null && (
         <AddBlockMenu

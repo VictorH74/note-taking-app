@@ -10,22 +10,12 @@ export type PageContentMetadataT = {
   }[];
 };
 
-// export type ListablePageContentT = {
-//   id: string;
-//   title: string;
-//   parentId: PageContentT["id"] | null;
-//   ownerId: string;
-//   createdAt: string;
-//   updatedAt: string;
-// }
-
-// export type PageContentT = {
-//   blockList: (BlockT & { [k: string]: unknown })[]; // Allow additional properties
-// };
-
 export type ListablePageDataT = Omit<PageContentT, "blockList">;
 
-export type EditablePageContentT = Pick<PageContentT, "title" | "blockList">;
+export type EditablePageContentT = Pick<
+  PageContentT,
+  "title" | "blockSortIdList"
+>;
 
 export type PageContentT = {
   id: string;
@@ -37,6 +27,8 @@ export type PageContentT = {
   createdAt: string;
   updatedAt: string;
   ownerId: string;
+
+  blockSortIdList: BlockT["id"][];
 };
 
 export type ListItemTypeT =
