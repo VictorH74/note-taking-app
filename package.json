@@ -15,10 +15,10 @@
     "@mui/material": "^7.2.0",
     "firebase": "^12.0.0",
     "firebase-admin": "^13.5.0",
-    "next": "15.3.4",
+    "next": "15.5.3",
     "prismjs": "^1.30.0",
-    "react": "^19.0.0",
-    "react-dom": "^19.0.0",
+    "react": "19.1.1",
+    "react-dom": "19.1.1",
     "sanitize-html": "^2.17.0",
     "tailwind-merge": "^3.3.1"
   },
@@ -27,12 +27,16 @@
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/prismjs": "^1.26.5",
-    "@types/react": "^19",
-    "@types/react-dom": "^19",
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9",
     "@types/sanitize-html": "^2.16.0",
     "eslint": "^9",
-    "eslint-config-next": "15.3.4",
+    "eslint-config-next": "15.5.3",
     "tailwindcss": "^4",
     "typescript": "^5"
+  },
+  "overrides": {
+    "@types/react": "19.1.13",
+    "@types/react-dom": "19.1.9"
   }
 }
