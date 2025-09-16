@@ -18,6 +18,7 @@ import {
 } from "@/types/page";
 import { applyFocus } from "@/lib/utils/functions";
 import React from "react";
+import { FooObj } from "./Foo";
 
 export type BlockListType = PageContentT["blockList"][number];
 
@@ -74,6 +75,8 @@ export function PageContentProvider({
   children: React.ReactNode;
 }) {
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+
+  const FooObjRef = React.useRef(new FooObj());
   const blockChangeDebounceTimeoutRef = React.useRef<Record<BlockT['id'], NodeJS.Timeout | null>>({});
 
   const [pageContent, setPageContent] = React.useState<PageContentT | null>(
@@ -117,11 +120,13 @@ export function PageContentProvider({
 
     // TODO: use pako to compress content before sending to API
     blockChangeDebounceTimeoutRef.current[block.id] = setTimeout(async () => {
-      await pageService.updateBlock(pageContent.blockList[index].id, pageContent.id, itemChangedData)
+      const updateAction = () => pageService.updateBlock(pageContent.blockList[index].id, pageContent.id, itemChangedData)
+      if (FooObjRef.current.has(block.id)) {
+        FooObjRef.current.addBlockIdRemovedListener(block.id, updateAction)
+        return;
+      }
+      await updateAction()
     }, 1000 * 2);
-
-    console.log(itemChangedData)
-
   };
 
   const addNewHeadingBlock = (
@@ -205,7 +210,7 @@ export function PageContentProvider({
     addNewBlock(data, index, replace);
   };
 
-  const addNewBlock = async (item: BlockT, index?: number, replace?: boolean) => {
+  const addNewBlock = (item: BlockT, index?: number, replace?: boolean) => {
     if (!pageContent) return;
     const _pageContent = { ...pageContent };
 
@@ -239,7 +244,15 @@ export function PageContentProvider({
     promises.push(pageService.updatePageContent(_pageContent.id, { blockSortIdList: newPageBlockSortIdList }))
 
     // TODO: try / catch
-    Promise.all(promises)
+    FooObjRef.current.add(item.id)
+
+    Promise.all(promises).catch((err) => {
+      console.error(err)
+      alert(err)
+      // TODO: handle error
+    }).finally(() => {
+      FooObjRef.current.remove(item.id)
+    })
 
     setPageContent(() => _pageContent);
 
