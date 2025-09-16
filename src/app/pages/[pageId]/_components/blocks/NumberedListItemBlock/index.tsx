@@ -26,9 +26,10 @@ export function NumberedListItemBlock({
     addNewListItemBlock(item.type, item.indent, index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
+    const block = pageContent!.blockList.find(b => b.id == pageContent!.blockSortIdList[index])
     addNewParagraphBlock(
       index,
-      pageContent!.blockList[index].text as string,
+      block!.text as string,
       true
     );
   };
@@ -44,7 +45,7 @@ export function NumberedListItemBlock({
   const getNumber = (currentIndex: number, count: number = 0) => {
     if (currentIndex == 0) return count + 1;
 
-    if (pageContent?.blockList[currentIndex - 1].type == "numberedlistitem") {
+    if (pageContent?.blockSortIdList[currentIndex - 1].startsWith("numberedlistitem")) {
       return getNumber(currentIndex - 1, count + 1);
     }
 

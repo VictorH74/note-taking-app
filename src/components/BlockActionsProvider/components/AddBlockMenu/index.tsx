@@ -27,13 +27,13 @@ export function AddBlockMenu({
   const { pageContent } = usePageContent();
 
   React.useEffect(() => {
-    const blockId = pageContent?.blockList[addBlockTriggerBlockIndex].id;
+    const blockId = pageContent?.blockSortIdList[addBlockTriggerBlockIndex]
     if (!blockId) return;
 
     const blockEl = document.getElementById(blockId);
     if (!blockEl) return;
     setBlockEl(blockEl);
-  }, [addBlockTriggerBlockIndex, pageContent?.blockList]);
+  }, [addBlockTriggerBlockIndex, pageContent?.blockSortIdList]);
 
   React.useEffect(() => {
     if (!blockEl) return;

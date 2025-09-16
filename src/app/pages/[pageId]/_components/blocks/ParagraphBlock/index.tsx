@@ -45,7 +45,8 @@ export function ParagraphBlock({
     addNewParagraphBlock(index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
-    removeBlock(index, true, pageContent!.blockList[index].text as string);
+    const block = pageContent!.blockList.find(b => b.id == pageContent!.blockSortIdList[index])
+    removeBlock(index, true, block!.text as string);
   };
 
   const handleFocus = (e: React.FocusEvent<HTMLElement>) => {

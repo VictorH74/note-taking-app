@@ -107,12 +107,14 @@ export function PageContentProvider({
   ) => {
     if (!pageContent) return;
 
-    const block = pageContent.blockList[index];
+    const blockId = pageContent.blockSortIdList[index];
 
-    pageContent.blockList[index] = {
-      ...block,
-      ...itemChangedData,
-    } as BlockListType;
+    const block = pageContent.blockList.find(b => b.id == blockId)
+
+
+    if (!block) return
+
+    Object.assign(block, itemChangedData)
 
     if (blockChangeDebounceTimeoutRef.current?.[block.id]) {
       clearTimeout(blockChangeDebounceTimeoutRef.current[block.id]!);
@@ -120,12 +122,14 @@ export function PageContentProvider({
 
     // TODO: use pako to compress content before sending to API
     blockChangeDebounceTimeoutRef.current[block.id] = setTimeout(async () => {
-      const updateAction = () => pageService.updateBlock(pageContent.blockList[index].id, pageContent.id, itemChangedData)
+      const updateAction = () => pageService.updateBlock(block.id, pageContent.id, itemChangedData)
       if (FooObjRef.current.has(block.id)) {
+        console.log('freezed')
         FooObjRef.current.addBlockIdRemovedListener(block.id, updateAction)
         return;
       }
       await updateAction()
+      console.log('updated')
     }, 1000 * 2);
   };
 
@@ -303,7 +307,7 @@ export function PageContentProvider({
     setPageContent(() => _pageContent);
 
     if (focusPrevBlock && index > 0)
-      applyFocus(pageContent.blockList[index - 1].id);
+      applyFocus(pageContent.blockSortIdList[index - 1]);
   };
 
   const reorderBlockList = (index: number, toIndex: number) => {

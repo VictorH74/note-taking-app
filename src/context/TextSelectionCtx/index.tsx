@@ -102,7 +102,7 @@ export function TextSelectionProvider({
     if (newRange) setSelectedRange(newRange);
 
     // update 'pageContent' with changed item
-    const blockId = pageContent?.blockList[onChangeBlockIndexRef.current!].id;
+    const blockId = pageContent?.blockSortIdList[onChangeBlockIndexRef.current!]
     const blockEl = document
       .getElementById(blockId as string)
       ?.getElementsByClassName(inputIdRef.current!)
@@ -209,9 +209,9 @@ export function TextSelectionProvider({
       node,
       offset,
     }) => [
-      node.nodeType == Node.ELEMENT_NODE ? node.firstChild! : node,
-      offset,
-    ];
+        node.nodeType == Node.ELEMENT_NODE ? node.firstChild! : node,
+        offset,
+      ];
 
     if (selectRangeStart && selectRangeEnd) {
       range.setStart(...getRangeSelection(selectRangeStart as SelectRangeT));

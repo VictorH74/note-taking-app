@@ -6,12 +6,15 @@ export class FooObj {
   private BlockIdRemovedListener: Record<BlockT["id"], () => Promise<void>> =
     {};
 
-  async remove(id: BlockT["id"]) {
+  remove(id: BlockT["id"]) {
     if (!this.blockIdSet.has(id)) return;
 
     this.blockIdSet.delete(id);
-    await this.BlockIdRemovedListener[id]();
-    delete this.BlockIdRemovedListener[id];
+    if (!Object.hasOwn(this.BlockIdRemovedListener, id)) return;
+
+    this.BlockIdRemovedListener[id]().then(() => {
+      delete this.BlockIdRemovedListener[id];
+    });
   }
 
   add(id: BlockT["id"]) {

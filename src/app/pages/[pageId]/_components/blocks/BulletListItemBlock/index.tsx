@@ -26,9 +26,10 @@ export function BulletListItemBlock({
     addNewListItemBlock(item.type, item.indent, index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
+    const block = pageContent!.blockList.find(b => b.id == pageContent!.blockSortIdList[index])
     addNewParagraphBlock(
       index,
-      pageContent!.blockList[index].text as string,
+      block!.text as string,
       true
     );
   };

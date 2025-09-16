@@ -322,7 +322,7 @@ export const useBlockInput = ({
 
       inputRef.innerHTML = changedHtmlText;
       applyFocusByIndex(
-        pageContent!.blockList[props.inputBlockIndex].id,
+        pageContent!.blockSortIdList[props.inputBlockIndex],
         caretIndex
       );
       return;
@@ -370,7 +370,7 @@ export const useBlockInput = ({
           htmlContent,
           language.includes("react") ? "javascript" : language,
           props.inputBlockIndex,
-          pageContent?.blockList[props.inputBlockIndex].type == "paragraph"
+          pageContent?.blockSortIdList[props.inputBlockIndex].startsWith("paragraph")
         );
       }
       return addCodeBlock(htmlContent, language, props.inputBlockIndex + 1);

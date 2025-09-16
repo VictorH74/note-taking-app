@@ -8,6 +8,8 @@ import {
   generateItemComponent,
 } from "../EditableContentListPage/useEditableContentList";
 import { sanitizeText } from "@/lib/utils/functions";
+import React from "react";
+import { BlockListType } from "@/context/PageContentCtx";
 
 interface ReadOnlyContentListPageProps {
   pageContentId: PageContentT["id"];
@@ -15,6 +17,16 @@ interface ReadOnlyContentListPageProps {
 
 export function ReadOnlyContentListPage(props: ReadOnlyContentListPageProps) {
   const { pageContent, error } = usePageContentFetch(props.pageContentId);
+
+  const sortedPageBlockList = React.useMemo<BlockListType[]>(() => {
+    if (!pageContent) return []
+    const blockById = pageContent.blockList.reduce<Record<BlockListType['id'], BlockListType>>((obj, block) => {
+      obj[block.id] = block
+      return obj
+    }, {})
+
+    return pageContent.blockSortIdList.map(id => blockById[id])
+  }, [pageContent])
 
   if (!pageContent) return null
 
@@ -42,7 +54,7 @@ export function ReadOnlyContentListPage(props: ReadOnlyContentListPageProps) {
                 }}
               ></h1>
 
-              {!!pageContent && pageContent?.blockList.map((item, index) =>
+              {sortedPageBlockList.map((item, index) =>
                 generateItemComponent[item.type](item, index)
               )}
             </div>
