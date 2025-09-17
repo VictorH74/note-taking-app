@@ -35,7 +35,7 @@ export function BlockInput(props: BlockInputProps) {
         (
           <InlineUrlDataChangeModal
             {...hook.inlineUrlChangeData}
-            onClose={() => hook.setInlineUrlChangeData(null)}
+            onClose={hook.hideInlineUrlChangeModal}
             syncBlockInput={hook.handlers.onInput}
           />
         )}

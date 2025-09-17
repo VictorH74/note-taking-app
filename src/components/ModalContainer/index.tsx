@@ -23,7 +23,7 @@ export function ModalContainer(props: ModalContainerProps) {
     return () => {
       window.removeEventListener('mousedown', props.onClose)
     }
-  }, []);
+  }, [props.onClose]);
 
   if (!mounted) return null;
 

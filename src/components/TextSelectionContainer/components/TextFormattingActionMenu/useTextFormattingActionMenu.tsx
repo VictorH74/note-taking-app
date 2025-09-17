@@ -1,49 +1,29 @@
 import { useTextSelection } from "@/hooks/useTextSelection";
+import { PositionT } from "@/types/global";
 import React from "react";
 
 // interface TextFormattingActionMenuProps {
 //   onClose(): void;
 // }
 
-const decreaseLeftNumber = 30;
-
 export const useTextFormattingActionMenu = () => {
-  const TextSelectionActionsRef = React.useRef<HTMLDivElement>(null);
+  const [rangePos, setRangePos] = React.useState<PositionT | null>(null)
 
   const { commonFormattingRef, selectedRange } = useTextSelection();
 
   const setupTextFormattingActionMenuPos = React.useCallback(() => {
-    if (!TextSelectionActionsRef.current) return;
-    const TextSelectionActions = TextSelectionActionsRef.current;
-
     if (selectedRange) {
-      const { top, left } = selectedRange.getBoundingClientRect();
+      const { top: rangeTop, left: RangeLeft } = selectedRange.getBoundingClientRect();
 
-      const TextFActionMenuWidth =
-        TextSelectionActions.children[0].getBoundingClientRect().width;
-
-      const calculedTop =
-        top - (TextSelectionActions.getBoundingClientRect().height + 10);
-      let calculedLeft =
-        left - decreaseLeftNumber > 0 ? left - decreaseLeftNumber : 0;
-
-      const resting =
-        window.innerWidth -
-        (calculedLeft + TextFActionMenuWidth) -
-        decreaseLeftNumber;
-      if (resting < 0) {
-        calculedLeft = calculedLeft + resting;
-      }
-
-      TextSelectionActions.style.top = calculedTop + "px";
-      TextSelectionActions.children[0].setAttribute(
-        "style",
-        `margin-left:${calculedLeft}px`
-      );
-
+      setRangePos({
+        top: rangeTop,
+        left: RangeLeft
+      })
+      console.log('setRangePos')
       return;
     }
-    TextSelectionActions.style.top = "0px";
+    setRangePos(null)
+    console.log('setRangePos to null')
   }, [selectedRange]);
 
   React.useEffect(() => {
@@ -58,7 +38,7 @@ export const useTextFormattingActionMenu = () => {
 
   return {
     commonFormattingRef,
-    TextSelectionActionsRef,
+    rangePos,
     selectedRange,
   };
 };

@@ -12,10 +12,9 @@ import {
   isInlineLinkPreviewNode,
   replaceBgColorStyle,
   sanitizeText,
-  setInputUrlClickHandler,
 } from "@/lib/utils/functions";
 import React from "react";
-import { LinkPreviewT, PositionT } from "@/types/global";
+import { LinkPreviewT } from "@/types/global";
 import { UrlOptionsMenuProps } from "./components/UrlOptionsMenu";
 
 export interface BlockInputProps {
@@ -50,17 +49,16 @@ export const useBlockInput = ({
   const [urlOptionsMenuData, setUrlOptionsMenuData] = React.useState<Omit<
     UrlOptionsMenuProps,
     "onClose"
-  > | null>(null);
-  const [inlineUrlChangeData, setInlineUrlChangeData] = React.useState<{
-    position: PositionT
-    linkEl: HTMLAnchorElement
-  } | null>(null)
+  > | null>(null)
 
   const { addNewParagraphBlock, pageContent, addCodeBlock } = usePageContent();
   const {
+    inlineUrlChangeData,
     showTextFormattingActionMenu,
     hideTextFormattingActionMenu,
-    redefineInputLinksClickHandler,
+    defineInputInlineLinkHandlers,
+    showInlineUrlChangeModal,
+    hideInlineUrlChangeModal
   } = useTextSelection();
 
   React.useEffect(() => {
@@ -82,7 +80,7 @@ export const useBlockInput = ({
     if (!inputRef) return;
 
     inputRef.innerHTML = sanitizeText(props.text);
-    redefineInputLinksClickHandler(inputRef);
+    defineInputInlineLinkHandlers(inputRef);
   }, [pageContent]);
 
   const getInputRef = () => {
@@ -95,7 +93,7 @@ export const useBlockInput = ({
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return -1;
     hideTextFormattingActionMenu();
-    setInlineUrlChangeData(null)
+    hideInlineUrlChangeModal()
 
     const range = sel.getRangeAt(0).cloneRange();
     const caretIndex = getCaretIndex(getInputRef()!);
@@ -306,19 +304,12 @@ export const useBlockInput = ({
         if (!preRange.startContainer.parentElement.classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)) {
           const link = range.startContainer.parentElement as HTMLAnchorElement
 
-          preRange.selectNodeContents(range.endContainer);
-          preRange.setStart(link.firstChild!, link.textContent?.length || 0);
-          const { top, left, height } = link.getBoundingClientRect();
-          setInlineUrlChangeData({
-            position: { left, top: top + height },
-            linkEl: link
-          })
-
+          showInlineUrlChangeModal(link)
           return
         }
       }
 
-      if (inlineUrlChangeData) setInlineUrlChangeData(null)
+      if (inlineUrlChangeData) hideInlineUrlChangeModal()
       return;
     }
 
@@ -491,15 +482,10 @@ export const useBlockInput = ({
     link.style.cursor = "pointer";
     link.href = previewData.url;
     link.textContent = previewData.title;
-    link.onclick = () =>
-      setInputUrlClickHandler(getInputRef()!, previewData.url);
-    link.onmouseover = () => {
-      console.log('onmouseover > show inline url options [copy link, edit]')
-    }
 
     const inputRef = getInputRef()!;
 
-    if (inputRef.textContent.length > 0) {
+    if (inputRef.textContent) {
       const startPartRange = range.cloneRange();
       startPartRange.setStart(inputRef.firstChild!, 0);
       startPartRange.setEnd(range.startContainer, range.startOffset);
@@ -518,7 +504,7 @@ export const useBlockInput = ({
     } else {
       inputRef.replaceChildren(link);
     }
-    redefineInputLinksClickHandler(inputRef);
+    defineInputInlineLinkHandlers(inputRef);
 
     range.setStartAfter(link);
     range.collapse(true);
@@ -592,7 +578,6 @@ export const useBlockInput = ({
     inputRef,
     id,
     inlineUrlChangeData,
-    setInlineUrlChangeData,
     handlers: {
       onKeyDown: handleKeyDown,
       onFocus: handleFocus,
@@ -601,6 +586,7 @@ export const useBlockInput = ({
       onPaste: handlePaste,
       onBlur: handleBlur
     },
+    hideInlineUrlChangeModal,
     setUrlOptionsMenuData,
   };
 };

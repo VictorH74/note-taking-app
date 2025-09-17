@@ -16,6 +16,7 @@ import {
 } from "@/lib/utils/functions";
 import React from "react";
 import { MergedNodeList } from "./MergedNodeList";
+import { PositionT } from "@/types/global";
 
 interface TextSelectionCtxProps {
   selectedNodeFormattingStyleListRef: React.RefObject<string[] | null>;
@@ -28,10 +29,16 @@ interface TextSelectionCtxProps {
     onChangeBlockIndex: number,
     inputId: string
   ) => void;
-  redefineInputLinksClickHandler: (inputEl: HTMLElement) => void;
+  defineInputInlineLinkHandlers: (inputEl: HTMLElement) => void;
   hideTextFormattingActionMenu: () => void;
   applyRemoveFormatting(formatting: FormattingT): void;
   onHideFActionMenuListener(func: () => void): void;
+  showInlineUrlChangeModal(link: HTMLAnchorElement): void
+  hideInlineUrlChangeModal(): void
+  inlineUrlChangeData: {
+    position: PositionT
+    linkEl: HTMLAnchorElement
+  } | null
 }
 
 export const TextSelectionCtx =
@@ -47,10 +54,21 @@ export function TextSelectionProvider({
   const commonFormattingRef = React.useRef<Set<FormattingT>>(null);
   const selectedNodeFormattingStyleListRef = React.useRef<Array<string>>(null);
   const onHideFActionMenuListenerList = React.useRef<Array<() => void>>([]);
+  const scheduledShowInlineUrlChangeModalFuncRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const [selectedRange, setSelectedRange] = React.useState<Range | null>(null);
+  const [inlineUrlChangeData, setInlineUrlChangeData] = React.useState<TextSelectionCtxProps['inlineUrlChangeData']>(null)
 
   const { pageContent, changePageContentBlockListItem } = usePageContent();
+
+  const showInlineUrlChangeModal = (link: HTMLAnchorElement) => {
+    const { top, left, height } = link.getBoundingClientRect();
+    setInlineUrlChangeData({
+      position: { left, top: top + height },
+      linkEl: link
+    })
+  }
+  const hideInlineUrlChangeModal = () => setInlineUrlChangeData(null)
 
   const onHideFActionMenuListener = (func: () => void) => {
     onHideFActionMenuListenerList.current.push(func);
@@ -219,12 +237,12 @@ export function TextSelectionProvider({
       range.setEnd(...getRangeSelection(selectRangeEnd as SelectRangeT));
     }
 
-    redefineInputInlineLinkHandlers(blockInputEl as HTMLElement);
+    defineInputInlineLinkHandlers(blockInputEl as HTMLElement);
 
     return range.cloneRange();
   };
 
-  const redefineInputInlineLinkHandlers = (inputEl: HTMLElement) => {
+  const defineInputInlineLinkHandlers = (inputEl: HTMLElement) => {
     const linkEls = inputEl.getElementsByTagName("a");
 
     if (linkEls.length > 0) {
@@ -233,10 +251,14 @@ export function TextSelectionProvider({
         link.onclick = () => setInputUrlClickHandler(inputEl, link.href);
 
         if (!link.classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)) {
-          // TODO: duplicated handler setting - ...
           link.onmouseover = () => {
-            // settimeout
-            console.log('onmouseover > show inline url options [copy link, edit]')
+            scheduledShowInlineUrlChangeModalFuncRef.current = setTimeout(() => {
+              showInlineUrlChangeModal(link)
+            }, 600);
+          }
+          link.onmouseleave = () => {
+            if (scheduledShowInlineUrlChangeModalFuncRef.current)
+              clearTimeout(scheduledShowInlineUrlChangeModalFuncRef.current)
           }
         }
       }
@@ -557,14 +579,17 @@ export function TextSelectionProvider({
       value={{
         onHideFActionMenuListener,
         inputIdRef,
-        redefineInputLinksClickHandler: redefineInputInlineLinkHandlers,
+        defineInputInlineLinkHandlers,
         showTextFormattingActionMenu,
         selectedRange,
         onChangeBlockIndexRef,
+        inlineUrlChangeData,
         hideTextFormattingActionMenu,
         commonFormattingRef,
         selectedNodeFormattingStyleListRef,
         applyRemoveFormatting,
+        showInlineUrlChangeModal,
+        hideInlineUrlChangeModal,
       }}
     >
       {children}

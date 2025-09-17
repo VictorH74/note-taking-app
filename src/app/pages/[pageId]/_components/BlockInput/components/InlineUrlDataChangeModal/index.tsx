@@ -24,7 +24,7 @@ export function InlineUrlDataChangeModal(props: InlineUrlDataChangeModalProps) {
                 </div>
                 <div>
                     Title
-                    <input type="text" className="w-full px-2 bg-zinc-700/60" defaultValue={props.linkEl.textContent} onChange={(e) => {
+                    <input type="text" className="w-full px-2 bg-zinc-700/60" defaultValue={props.linkEl.textContent as string} onChange={(e) => {
                         props.linkEl.textContent = e.currentTarget.value
                         props.syncBlockInput()
                     }} />

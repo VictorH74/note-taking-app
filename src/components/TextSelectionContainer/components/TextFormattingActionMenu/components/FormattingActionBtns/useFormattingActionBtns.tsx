@@ -1,8 +1,8 @@
 import React from "react";
+import { PositionT } from "@/types/global";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { useTextSelection } from "@/hooks/useTextSelection";
 import { TextFormattingT } from "@/lib/utils/constants";
-import { PositionT } from "@/types/global";
 import {
   BgColorFormattingT,
   FORMATTING_STYLE,
@@ -15,20 +15,20 @@ type ActionBtnDataListT = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
   "className" | "onClick" | "children"
 > & {
-  ref?: (el: HTMLButtonElement) => void;
+  setElStyle?: (el: HTMLButtonElement) => void;
 };
 
-export const useFormattingActionBtns = () => {
-  const formattingActionBtnRefs = React.useRef<
-    Record<TextFormattingT | "color", HTMLButtonElement | null>
-  >({
-    bold: null,
-    italic: null,
-    underline: null,
-    "strike-through": null,
-    color: null,
-  });
+export interface FormattingActionBtnsProps {
+  rangePos: PositionT
+}
 
+const decreaseLeftNumber = 30;
+
+export const useFormattingActionBtns = (props: FormattingActionBtnsProps) => {
+  const FormattingActionBtnsRef = React.useRef<HTMLDivElement>(null);
+
+  const [calculatedPos, setCalculatedPos] = React.useState<PositionT | null>(null)
+  const [formattingBtnStyle, setFormattingBtnStyle] = React.useState<Record<TextFormattingT | 'color', string> | null>(null)
   const [colorPickerPos, setColorPickerPos] = React.useState<PositionT | null>(
     null
   );
@@ -42,78 +42,84 @@ export const useFormattingActionBtns = () => {
   } = useTextSelection();
 
   const actionBtnDataList = React.useMemo<ActionBtnDataListT[]>(
-    () => [
-      {
-        children: "copy",
-        className: "font-semibold px-2",
-        onClick: () => {},
-      },
-      {
-        children: "paste",
-        className: "font-semibold px-2",
-        onClick: () => {},
-      },
-      {
-        children: "b",
-        className: "uppercase font-extrabold",
-        onClick: () => {
-          applyRemoveFormatting("bold");
+    () => {
+      if (!formattingBtnStyle) return []
+      return [
+        {
+          children: "copy",
+          className: "font-semibold px-2",
+          onClick: () => { },
         },
-        ref: (el) => {
-          formattingActionBtnRefs.current.bold = el;
+        {
+          children: "paste",
+          className: "font-semibold px-2",
+          onClick: () => { },
         },
-      },
-      {
-        children: "i",
-        className: "uppercase font-medium italic",
-        onClick: () => {
-          applyRemoveFormatting("italic");
+        {
+          children: "b",
+          className: "uppercase font-extrabold",
+          onClick: () => {
+            applyRemoveFormatting("bold");
+          },
+          setElStyle: (el) => {
+            el.setAttribute('style', formattingBtnStyle.bold || '')
+
+          },
         },
-        ref: (el) => {
-          formattingActionBtnRefs.current.italic = el;
+        {
+          children: "i",
+          className: "uppercase font-medium italic",
+          onClick: () => {
+            applyRemoveFormatting("italic");
+          },
+          setElStyle: (el) => {
+            el.setAttribute('style', formattingBtnStyle.italic || '')
+          },
         },
-      },
-      {
-        children: "s",
-        className: "uppercase font-medium line-through",
-        onClick: () => {
-          applyRemoveFormatting("strike-through");
+        {
+          children: "s",
+          className: "uppercase font-medium line-through",
+          onClick: () => {
+            applyRemoveFormatting("strike-through");
+          },
+          setElStyle: (el) => {
+            el.setAttribute('style', formattingBtnStyle["strike-through"] || '')
+          },
         },
-        ref: (el) => {
-          formattingActionBtnRefs.current["strike-through"] = el;
+        {
+          children: "u",
+          className: "uppercase font-medium underline",
+          onClick: () => {
+            applyRemoveFormatting("underline");
+          },
+          setElStyle: (el) => {
+            el.setAttribute('style', formattingBtnStyle.underline || '')
+          },
         },
-      },
-      {
-        children: "u",
-        className: "uppercase font-medium underline",
-        onClick: () => {
-          applyRemoveFormatting("underline");
+        {
+          children: (
+            <>
+              <span className="color-formatting-btn border border-zinc-600 py-[3px] px-2 rounded-md ">
+                A
+              </span>
+              <ExpandMoreIcon sx={{ fontSize: 20 }} />
+            </>
+          ),
+          className:
+            "uppercase font-medium flex justify-center items-center px-3 relative",
+          onClick: (e) => {
+            const { left, height } = e.currentTarget.getBoundingClientRect();
+            setColorPickerPos({ left, top: height });
+          },
+          setElStyle: (el) => {
+            const spanel = el.getElementsByClassName('color-formatting-btn').item(0)
+
+            if (spanel) spanel.setAttribute('style', formattingBtnStyle.color)
+          },
         },
-        ref: (el) => {
-          formattingActionBtnRefs.current.underline = el;
-        },
-      },
-      {
-        children: (
-          <>
-            <span className="color-formatting-btn border border-zinc-600 py-[3px] px-2 rounded-md ">
-              A
-            </span>
-            <ExpandMoreIcon sx={{ fontSize: 20 }} />
-          </>
-        ),
-        className:
-          "uppercase font-medium flex justify-center items-center px-3 relative",
-        onClick: (e) => {
-          const { left, height } = e.currentTarget.getBoundingClientRect();
-          setColorPickerPos({ left, top: height });
-        },
-        ref: (el) => {
-          formattingActionBtnRefs.current.color = el;
-        },
-      },
-    ],
-    [applyRemoveFormatting]
+      ]
+    },
+    [applyRemoveFormatting, formattingBtnStyle]
   );
 
   const setup = React.useCallback(() => {
@@ -150,13 +156,8 @@ export const useFormattingActionBtns = () => {
     // find common styles from selected nodes
     commonFormattingRef.current = new Set();
 
-    const colorFBtn = (formattingActionBtnRefs.current.color
-      ?.getElementsByClassName("color-formatting-btn")
-      .item(0) ||
-      (() => {
-        throw new Error("Color demo element is null!");
-      })()) as HTMLElement;
-    colorFBtn.setAttribute("style", "");
+    let colorFBtnStyle = ''
+    const _formattingBtnStyle: Partial<typeof formattingBtnStyle> = {}
 
     const textColorFormattingPrefix: TextColorFormattingT = "color-";
     const bgColorFormattingPrefix: BgColorFormattingT = "bg-";
@@ -182,25 +183,27 @@ export const useFormattingActionBtns = () => {
       }
 
       // style color formatting button
-      const colorFBtnStyles = colorFBtn.getAttribute("style") || "";
+      let isColorFormattingKey = false
       if (fName.startsWith(textColorFormattingPrefix) && isCommonFormatting) {
-        colorFBtn.setAttribute("style", fStyle.concat(colorFBtnStyles));
+        colorFBtnStyle = fStyle.concat(colorFBtnStyle)
+        isColorFormattingKey = true;
       } else if (
         fName.startsWith(bgColorFormattingPrefix) &&
         isCommonFormatting
       ) {
-        colorFBtn.setAttribute("style", fStyle.concat(colorFBtnStyles));
+        colorFBtnStyle = fStyle.concat(colorFBtnStyle);
+        isColorFormattingKey = true;
       }
+      _formattingBtnStyle.color = colorFBtnStyle
 
+      if (isColorFormattingKey) return
       // highlight text formatting buttons
-      const fActionBtnRef =
-        formattingActionBtnRefs.current[
-          fName as keyof typeof formattingActionBtnRefs.current
-        ];
-
-      if (!!fActionBtnRef)
-        fActionBtnRef.style.color = isCommonFormatting ? "#6479f0" : "#eeeeee";
+      const textFKey = fName
+      const style = 'color:'.concat(isCommonFormatting ? "#6479f0" : "#eeeeee") + ';'
+      _formattingBtnStyle[textFKey as TextFormattingT] = style
     });
+
+    setFormattingBtnStyle(_formattingBtnStyle as typeof formattingBtnStyle)
 
     console.log(
       "   setup >> selectedNodeFormattingStyleList",
@@ -221,10 +224,39 @@ export const useFormattingActionBtns = () => {
   ]);
 
   React.useEffect(() => {
+    if (!(actionBtnDataList.length > 0) || !FormattingActionBtnsRef.current) return;
+
+    const FormattingActionBtns = FormattingActionBtnsRef.current;
+
+    const { width: FActionBtnsWidth, height: FActionBtnsHeight } = FormattingActionBtns.getBoundingClientRect()
+    const { top: rangeTop, left: rangeLeft } = props.rangePos
+
+    const calculedTop = rangeTop - (FActionBtnsHeight + 10);
+    let calculedLeft =
+      rangeLeft - decreaseLeftNumber > 0 ? rangeLeft - decreaseLeftNumber : 0;
+
+    const resting =
+      window.innerWidth -
+      (calculedLeft + FActionBtnsWidth) -
+      decreaseLeftNumber;
+    if (resting < 0) {
+      calculedLeft = calculedLeft + resting;
+    }
+
+    setCalculatedPos({
+      top: calculedTop,
+      left: calculedLeft
+    })
+
+  }, [actionBtnDataList, props.rangePos]);
+
+  React.useEffect(() => {
     return setup();
   }, [selectedRange, setup]);
 
   return {
+    calculatedPos,
+    FormattingActionBtnsRef,
     actionBtnDataList,
     colorPickerPos,
   };
