@@ -9,10 +9,10 @@ import {
   generateItemComponent,
   useEditableContentList,
 } from "./useEditableContentList";
-import { sanitizeText } from "@/lib/utils/functions";
 import { TextSelectionContainer } from "@/components/TextSelectionContainer";
 import { BlockActionsProvider } from "@/components/BlockActionsProvider";
 import { PageContentContainer } from "../ContentListPageBase";
+import { PageTitleInput } from "./PageTitleInput";
 
 export function EditableContentListPage(
   props: ContentListPageEditableChildrenProps
@@ -39,15 +39,10 @@ export function EditableContentListPage(
       >
         <div onMouseUp={() => { }}>
           <TextSelectionContainer>
-            <h1
-              contentEditable
-              className="text-4xl font-extrabold outline-none mb-1"
-              id="page-title"
+            <PageTitleInput
               onInput={hook.handleContentTitleChange}
-              dangerouslySetInnerHTML={{
-                __html: sanitizeText(hook.pageContent?.title || ""),
-              }}
-            ></h1>
+              text={hook.pageContent?.title || ""}
+            ></PageTitleInput>
 
             <BlockActionsProvider>
               {hook.sortedPageBlockList.map((item, index) =>

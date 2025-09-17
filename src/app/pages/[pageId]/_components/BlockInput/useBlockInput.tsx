@@ -2,10 +2,12 @@
 import Prism from "prismjs";
 import { usePageContent } from "@/hooks/usePageContent";
 import { useTextSelection } from "@/hooks/useTextSelection";
-import { FORMATTING_STYLE, TextColorFormattingT } from "@/lib/utils/constants";
+import { FORMATTING_STYLE, INLINE_LINK_PREVIEW_CLASSNAME, TextColorFormattingT } from "@/lib/utils/constants";
 import {
   applyFocus,
   applyFocusByIndex,
+  getCaretIndex,
+  getElementFirstBlockInput,
   getNodeFromIndex,
   isInlineLinkPreviewNode,
   replaceBgColorStyle,
@@ -13,7 +15,7 @@ import {
   setInputUrlClickHandler,
 } from "@/lib/utils/functions";
 import React from "react";
-import { LinkPreviewT } from "@/types/global";
+import { LinkPreviewT, PositionT } from "@/types/global";
 import { UrlOptionsMenuProps } from "./components/UrlOptionsMenu";
 
 export interface BlockInputProps {
@@ -49,6 +51,10 @@ export const useBlockInput = ({
     UrlOptionsMenuProps,
     "onClose"
   > | null>(null);
+  const [inlineUrlChangeData, setInlineUrlChangeData] = React.useState<{
+    position: PositionT
+    linkEl: HTMLAnchorElement
+  } | null>(null)
 
   const { addNewParagraphBlock, pageContent, addCodeBlock } = usePageContent();
   const {
@@ -85,24 +91,14 @@ export const useBlockInput = ({
     return null;
   };
 
-  const getCaretIndex = () => {
-    const sel = window.getSelection();
-    if (!sel) return -1;
-
-    const range = sel.getRangeAt(0).cloneRange();
-    const preRange = range.cloneRange();
-    preRange.selectNodeContents(getInputRef()!);
-    preRange.setEnd(range.endContainer, range.endOffset);
-    return preRange.toString().length;
-  };
-
   const handleKeyDown = (e: React.KeyboardEvent<HTMLParagraphElement>) => {
     const sel = window.getSelection();
     if (!sel || sel.rangeCount === 0) return -1;
     hideTextFormattingActionMenu();
+    setInlineUrlChangeData(null)
 
     const range = sel.getRangeAt(0).cloneRange();
-    const caretIndex = getCaretIndex();
+    const caretIndex = getCaretIndex(getInputRef()!);
 
     const textContent = e.currentTarget.textContent || "";
 
@@ -150,11 +146,22 @@ export const useBlockInput = ({
         }
       },
       ArrowLeft: () => {
-        if (caretIndex == 0 && props.inputBlockIndex > 0) {
-          applyFocus(
-            pageContent!.blockSortIdList[props.inputBlockIndex - 1],
-            "end"
-          );
+        if (caretIndex == 0) {
+          if (props.inputBlockIndex > 0) {
+            const elId = pageContent!.blockSortIdList[props.inputBlockIndex - 1]
+            const el = getElementFirstBlockInput(elId)
+            if (!el) return;
+            applyFocus(el, "end");
+
+          } else {
+            const element = document.getElementById('page-title');
+            applyFocus(
+              element!,
+              "end"
+            );
+          }
+
+
           e.preventDefault();
           return;
         }
@@ -175,8 +182,10 @@ export const useBlockInput = ({
           caretIndex >= textContent.length &&
           props.inputBlockIndex < pageContent!.blockSortIdList.length - 1
         ) {
+          const elId = pageContent!.blockSortIdList[props.inputBlockIndex + 1]
+          const el = getElementFirstBlockInput(elId)
           applyFocus(
-            pageContent!.blockSortIdList[props.inputBlockIndex + 1],
+            el!,
             "start"
           );
           e.preventDefault();
@@ -197,11 +206,17 @@ export const useBlockInput = ({
       ArrowUp: () => {
         const isFirstBlockItem = props.inputBlockIndex == 0; // TODO: override to props.canFocusTopInput
 
-        if (textContent.length == 0 && !isFirstBlockItem) {
-          applyFocusByIndex(
-            pageContent!.blockSortIdList[props.inputBlockIndex - 1],
-            caretIndex
-          );
+        if (textContent.length == 0) {
+
+          if (isFirstBlockItem) {
+            applyFocusByIndex(document.getElementById('page-title')!, caretIndex)
+          } else {
+            applyFocusByIndex(
+              getElementFirstBlockInput(pageContent!.blockSortIdList[props.inputBlockIndex - 1])!,
+              caretIndex
+            );
+          }
+
           e.preventDefault();
           return;
         }
@@ -218,11 +233,16 @@ export const useBlockInput = ({
         const caretTop = range.getBoundingClientRect().y;
         const startTop = tempRange.getBoundingClientRect().y;
 
-        if (caretTop == startTop && !isFirstBlockItem) {
-          applyFocusByIndex(
-            pageContent!.blockSortIdList[props.inputBlockIndex - 1],
-            caretIndex
-          );
+        if (caretTop == startTop) {
+          if (isFirstBlockItem) {
+            applyFocusByIndex(document.getElementById('page-title')!, caretIndex)
+          } else {
+            applyFocusByIndex(
+              getElementFirstBlockInput(pageContent!.blockSortIdList[props.inputBlockIndex - 1])!,
+              caretIndex
+            );
+          }
+
           e.preventDefault();
         }
       },
@@ -232,7 +252,7 @@ export const useBlockInput = ({
 
         if (textContent.length == 0 && !isLastBlockItem) {
           applyFocusByIndex(
-            pageContent!.blockSortIdList[props.inputBlockIndex + 1],
+            getElementFirstBlockInput(pageContent!.blockSortIdList[props.inputBlockIndex + 1])!,
             caretIndex
           );
           e.preventDefault();
@@ -260,7 +280,7 @@ export const useBlockInput = ({
 
         if (caretTop == endTop && !isLastBlockItem) {
           applyFocusByIndex(
-            pageContent!.blockSortIdList[props.inputBlockIndex + 1],
+            getElementFirstBlockInput(pageContent!.blockSortIdList[props.inputBlockIndex + 1])!,
             caretIndex
           );
           e.preventDefault();
@@ -279,7 +299,28 @@ export const useBlockInput = ({
 
     if (props.disableFormatting) return;
 
-    if (!sel.toString()) return;
+    if (!sel.toString()) {
+      const preRange = range.cloneRange();
+
+      if (preRange.startContainer && preRange.startContainer.parentElement?.tagName == 'A') {
+        if (!preRange.startContainer.parentElement.classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)) {
+          const link = range.startContainer.parentElement as HTMLAnchorElement
+
+          preRange.selectNodeContents(range.endContainer);
+          preRange.setStart(link.firstChild!, link.textContent?.length || 0);
+          const { top, left, height } = link.getBoundingClientRect();
+          setInlineUrlChangeData({
+            position: { left, top: top + height },
+            linkEl: link
+          })
+
+          return
+        }
+      }
+
+      if (inlineUrlChangeData) setInlineUrlChangeData(null)
+      return;
+    }
 
     showTextFormattingActionMenu(range.cloneRange(), props.inputBlockIndex, id);
   };
@@ -322,7 +363,7 @@ export const useBlockInput = ({
 
       inputRef.innerHTML = changedHtmlText;
       applyFocusByIndex(
-        pageContent!.blockSortIdList[props.inputBlockIndex],
+        getElementFirstBlockInput(pageContent!.blockSortIdList[props.inputBlockIndex])!,
         caretIndex
       );
       return;
@@ -452,39 +493,31 @@ export const useBlockInput = ({
     link.textContent = previewData.title;
     link.onclick = () =>
       setInputUrlClickHandler(getInputRef()!, previewData.url);
-    // TODO: open ChangeLinkDataModal by link selection
-    // link.onselectionchange = () => {
-    //   const preRange = range.cloneRange();
-    //   preRange.selectNodeContents(range.endContainer);
-    //   preRange.setStart(link.firstChild!, link.textContent?.length || 0);
-    //   const { top, left, height } = preRange.getBoundingClientRect();
-    //   console.log("onselectionchange | show modeal in ", left, top + height);
-    // };
-    // link.onselect = () => {
-    //   const preRange = range.cloneRange();
-    //   preRange.selectNodeContents(range.endContainer);
-    //   preRange.setStart(link.firstChild!, link.textContent?.length || 0);
-    //   const { top, left, height } = preRange.getBoundingClientRect();
-    //   console.log("onselect | show modeal in ", left, top + height);
-    // };
+    link.onmouseover = () => {
+      console.log('onmouseover > show inline url options [copy link, edit]')
+    }
 
     const inputRef = getInputRef()!;
 
-    const startPartRange = range.cloneRange();
-    startPartRange.setStart(inputRef.firstChild!, 0);
-    startPartRange.setEnd(range.startContainer, range.startOffset);
+    if (inputRef.textContent.length > 0) {
+      const startPartRange = range.cloneRange();
+      startPartRange.setStart(inputRef.firstChild!, 0);
+      startPartRange.setEnd(range.startContainer, range.startOffset);
 
-    const endPartRange = range.cloneRange();
-    endPartRange.setStart(range.startContainer, range.startOffset);
-    endPartRange.setEnd(
-      inputRef.lastChild!,
-      (inputRef.lastChild!.textContent || "").length
-    );
+      const endPartRange = range.cloneRange();
+      endPartRange.setStart(range.startContainer, range.startOffset);
+      endPartRange.setEnd(
+        inputRef.lastChild!,
+        (inputRef.lastChild!.textContent || "").length
+      );
 
-    const startPartFrag = startPartRange.cloneContents();
-    const endPartFrag = endPartRange.cloneContents();
+      const startPartFrag = startPartRange.cloneContents();
+      const endPartFrag = endPartRange.cloneContents();
 
-    inputRef.replaceChildren(startPartFrag, link, endPartFrag);
+      inputRef.replaceChildren(startPartFrag, link, endPartFrag);
+    } else {
+      inputRef.replaceChildren(link);
+    }
     redefineInputLinksClickHandler(inputRef);
 
     range.setStartAfter(link);
@@ -558,6 +591,8 @@ export const useBlockInput = ({
     urlOptionsMenuData,
     inputRef,
     id,
+    inlineUrlChangeData,
+    setInlineUrlChangeData,
     handlers: {
       onKeyDown: handleKeyDown,
       onFocus: handleFocus,

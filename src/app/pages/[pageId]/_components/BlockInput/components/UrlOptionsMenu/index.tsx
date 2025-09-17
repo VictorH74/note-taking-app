@@ -4,6 +4,7 @@ import {
   INLINE_LINK_PREVIEW_CLASSNAME,
 } from "@/lib/utils/constants";
 import React from "react";
+import { createPortal } from "react-dom";
 
 export interface UrlOptionsMenuProps {
   position: PositionT;
@@ -67,7 +68,7 @@ export const UrlOptionsMenu = (props: UrlOptionsMenuProps) => {
     props.onClose(true);
   };
 
-  return (
+  return createPortal(
     <div
       ref={ref}
       className="absolute p-2 rounded-lg bg-zinc-800 flex flex-col"
@@ -80,6 +81,7 @@ export const UrlOptionsMenu = (props: UrlOptionsMenuProps) => {
       <button className={btnClassName} onClick={() => props.onClose()}>
         URL
       </button>
-    </div>
+    </div>,
+    document.body
   );
 };

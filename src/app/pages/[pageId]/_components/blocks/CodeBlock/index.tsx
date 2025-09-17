@@ -50,17 +50,20 @@ export function CodeBlock({ item, index, onChange }: CodeContentProps) {
         fontFamily: "Consolas, 'Courier New', monospace",
       }}
     >
-      <div className="w-full flex items-center absolute top-0 z-10 inset-x-0 py-2 px-4 text-[13px]">
-        <ChangeLangBtn selectedLang={item.language} />
+      <div className="relative">
+        <div className="w-full flex items-center absolute top-0 z-10 inset-x-0 py-2 px-4 text-[13px]">
+          <ChangeLangBtn selectedLang={item.language} />
+        </div>
+        <BlockInput
+          text={item.content.replaceAll("<br>", "\n")}
+          inputBlockIndex={index}
+          className="bg-[#1f1f1f] rounded-lg px-6 py-10 text-sm text-[#cccccc] line leading-4x"
+          onInput={handleInput}
+          disableFormatting
+          useBreakLineElement={false}
+        />
       </div>
-      <BlockInput
-        text={item.content.replaceAll("<br>", "\n")}
-        inputBlockIndex={index}
-        className="bg-[#1f1f1f] rounded-lg px-6 py-10 text-sm text-[#cccccc] line leading-4x"
-        onInput={handleInput}
-        disableFormatting
-        useBreakLineElement={false}
-      />
+
     </BlockContainer>
   );
 }

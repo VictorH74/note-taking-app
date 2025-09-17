@@ -4,6 +4,7 @@ import {
   FormattingT,
   BgColorFormattingT,
   TextColorFormattingT,
+  INLINE_LINK_PREVIEW_CLASSNAME,
 } from "@/lib/utils/constants";
 import {
   compareStr,
@@ -218,18 +219,26 @@ export function TextSelectionProvider({
       range.setEnd(...getRangeSelection(selectRangeEnd as SelectRangeT));
     }
 
-    redefineInputLinksClickHandler(blockInputEl as HTMLElement);
+    redefineInputInlineLinkHandlers(blockInputEl as HTMLElement);
 
     return range.cloneRange();
   };
 
-  const redefineInputLinksClickHandler = (inputEl: HTMLElement) => {
+  const redefineInputInlineLinkHandlers = (inputEl: HTMLElement) => {
     const linkEls = inputEl.getElementsByTagName("a");
 
     if (linkEls.length > 0) {
       for (let i = 0; i < linkEls.length; i++) {
-        const linkEl = linkEls[i];
-        linkEl.onclick = () => setInputUrlClickHandler(inputEl, linkEl.href);
+        const link = linkEls[i];
+        link.onclick = () => setInputUrlClickHandler(inputEl, link.href);
+
+        if (!link.classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)) {
+          // TODO: duplicated handler setting - ...
+          link.onmouseover = () => {
+            // settimeout
+            console.log('onmouseover > show inline url options [copy link, edit]')
+          }
+        }
       }
     }
   };
@@ -548,7 +557,7 @@ export function TextSelectionProvider({
       value={{
         onHideFActionMenuListener,
         inputIdRef,
-        redefineInputLinksClickHandler,
+        redefineInputLinksClickHandler: redefineInputInlineLinkHandlers,
         showTextFormattingActionMenu,
         selectedRange,
         onChangeBlockIndexRef,

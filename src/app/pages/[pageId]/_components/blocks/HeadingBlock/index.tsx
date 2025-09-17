@@ -4,7 +4,7 @@ import { twMerge } from "tailwind-merge";
 import { usePageContent } from "@/hooks/usePageContent";
 import React from "react";
 import { BlockInput } from "../../BlockInput";
-import { applyFocus, sanitizeText } from "@/lib/utils/functions";
+import { applyFocus, getElementFirstBlockInput, sanitizeText } from "@/lib/utils/functions";
 import { BlockContainer } from "../../BlockContainer";
 
 type HeadingContentProps = {
@@ -91,7 +91,7 @@ export function HeadingBlock(props: HeadingContentProps) {
         headingItemData.containerClassName
       )}
       onClick={() => {
-        applyFocus(props.item.id);
+        applyFocus(getElementFirstBlockInput(props.item.id)!);
       }}
     >
       <div className="relative" onClick={(e) => e.stopPropagation()}>

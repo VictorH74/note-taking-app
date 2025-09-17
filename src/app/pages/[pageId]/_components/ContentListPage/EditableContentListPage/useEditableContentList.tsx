@@ -40,7 +40,7 @@ import {
   NumberedListItemBlock,
   ReadableNumberedListItemBlock,
 } from "../../blocks/NumberedListItemBlock";
-import { applyFocus } from "@/lib/utils/functions";
+import { applyFocus, getElementFirstBlockInput } from "@/lib/utils/functions";
 
 export interface ContentListPageEditableChildrenProps {
   pageContentId: PageContentT["id"];
@@ -254,7 +254,7 @@ export const useEditableContentList = (
   const createNewParagraphBlock = () => {
     const lastBlock = pageContent?.blockList.at(-1);
     if (lastBlock?.type == "paragraph" && !lastBlock.text) {
-      applyFocus(lastBlock.id);
+      applyFocus(getElementFirstBlockInput(lastBlock.id)!);
       return;
     }
 

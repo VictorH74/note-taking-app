@@ -83,15 +83,17 @@ export const compareStr = (strA: string, strB: string) => {
   return true;
 };
 
-export const applyFocus = (id: string, at: "start" | "end" = "end") => {
+export const getElementFirstBlockInput = (id: string) => {
+  const element = document.getElementById(id);
+  return element!.getElementsByClassName(BLOCK_INPUT_CLASSNAME).item(0);
+};
+
+export const applyFocus = (el: Element, at: "start" | "end" = "end") => {
   setTimeout(() => {
-    const element = document.getElementById(id);
     const selection = window.getSelection();
-    if (!element || !selection) return;
+    if (!selection) return;
 
     const range = document.createRange();
-    const el = element.getElementsByClassName(BLOCK_INPUT_CLASSNAME).item(0);
-    if (!el) return;
 
     if (
       at == "end" &&
@@ -110,43 +112,11 @@ export const applyFocus = (id: string, at: "start" | "end" = "end") => {
   }, 0);
 };
 
-export const isInlineLinkPreviewNode = (node: Node) => {
-  if (
-    node.nodeType == Node.ELEMENT_NODE &&
-    (node as HTMLElement).classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)
-  )
-    return true;
-  return false;
-};
-
-export const getNodeFromIndex = (elementNode: Node, offset: number) => {
-  if (elementNode.childNodes.length > 0) {
-    let targetNode: ChildNode | null = null;
-    for (let i = 0; i < elementNode.childNodes.length; i++) {
-      const node = elementNode.childNodes[i];
-      const nodeTextLength = node.textContent?.length || 0;
-
-      if (nodeTextLength >= offset) {
-        targetNode = node;
-        break;
-      }
-      offset -= nodeTextLength;
-    }
-
-    if (targetNode) return { node: targetNode, offset };
-  }
-
-  return null;
-};
-
-export const applyFocusByIndex = (elementId: string, offset: number) => {
-  const element = document.getElementById(elementId);
+export const applyFocusByIndex = (el: Element, offset: number) => {
   const selection = window.getSelection();
-  if (!element || !selection) return;
+  if (!selection) return;
 
   const range = document.createRange();
-  const el = element.getElementsByClassName(BLOCK_INPUT_CLASSNAME).item(0);
-  if (!el) return;
 
   if (el.childNodes.length > 0) {
     const data = getNodeFromIndex(el, offset);
@@ -180,6 +150,35 @@ export const applyFocusByIndex = (elementId: string, offset: number) => {
   }
 
   (el as HTMLElement).focus();
+};
+
+export const isInlineLinkPreviewNode = (node: Node) => {
+  if (
+    node.nodeType == Node.ELEMENT_NODE &&
+    (node as HTMLElement).classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)
+  )
+    return true;
+  return false;
+};
+
+export const getNodeFromIndex = (elementNode: Node, offset: number) => {
+  if (elementNode.childNodes.length > 0) {
+    let targetNode: ChildNode | null = null;
+    for (let i = 0; i < elementNode.childNodes.length; i++) {
+      const node = elementNode.childNodes[i];
+      const nodeTextLength = node.textContent?.length || 0;
+
+      if (nodeTextLength >= offset) {
+        targetNode = node;
+        break;
+      }
+      offset -= nodeTextLength;
+    }
+
+    if (targetNode) return { node: targetNode, offset };
+  }
+
+  return null;
 };
 
 export const formatText = (text: string): string => {
@@ -221,4 +220,15 @@ export const formatText = (text: string): string => {
   });
 
   return formattedDataList.join("");
+};
+
+export const getCaretIndex = (element: Element) => {
+  const sel = window.getSelection();
+  if (!sel) return -1;
+
+  const range = sel.getRangeAt(0).cloneRange();
+  const preRange = range.cloneRange();
+  preRange.selectNodeContents(element);
+  preRange.setEnd(range.endContainer, range.endOffset);
+  return preRange.toString().length;
 };

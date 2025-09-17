@@ -16,7 +16,7 @@ export function BlockDropArea({
   onDrop,
   onClose,
 }: BlockDropAreaProps) {
-  const blockContentRef = React.useRef<Node>(null);
+  const blockContentRef = React.useRef<HTMLDivElement>(null);
   const blockWidthRef = React.useRef<number>(null);
   const blockListContainerTop = React.useRef<number>(null);
 
@@ -51,7 +51,8 @@ export function BlockDropArea({
       .getElementsByClassName("block-content")
       .item(0);
     if (blockContent) {
-      blockContentRef.current = blockContent.cloneNode(true);
+      blockContentRef.current = blockContent.cloneNode(true) as HTMLDivElement
+      blockContentRef.current.classList.add('ml-7')
       blockWidthRef.current = blockEl.getBoundingClientRect().width;
     }
 
@@ -115,7 +116,7 @@ export function BlockDropArea({
             ref={(ref) => {
               ref?.append(blockContentRef.current!);
             }}
-            className="absolute pointer-events-none opacity-40 -translate-y-1/2 "
+            className="absolute pointer-events-none opacity-40 -translate-y-1/2"
             style={{
               top: mousePos.top + scrollHeight,
               left: mousePos.left,

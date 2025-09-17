@@ -16,7 +16,7 @@ import {
   PageContentT,
   ParagraphBlockT,
 } from "@/types/page";
-import { applyFocus } from "@/lib/utils/functions";
+import { applyFocus, getElementFirstBlockInput } from "@/lib/utils/functions";
 import React from "react";
 import { FooObj } from "./Foo";
 
@@ -261,7 +261,7 @@ export function PageContentProvider({
     setPageContent(() => _pageContent);
 
     setTimeout(() => {
-      applyFocus(item.id, "start");
+      applyFocus(getElementFirstBlockInput(item.id)!, "start");
     }, 0);
   };
 
@@ -307,7 +307,7 @@ export function PageContentProvider({
     setPageContent(() => _pageContent);
 
     if (focusPrevBlock && index > 0)
-      applyFocus(pageContent.blockSortIdList[index - 1]);
+      applyFocus(getElementFirstBlockInput(pageContent.blockSortIdList[index - 1])!);
   };
 
   const reorderBlockList = (index: number, toIndex: number) => {

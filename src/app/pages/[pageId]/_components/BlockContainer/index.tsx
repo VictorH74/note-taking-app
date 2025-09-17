@@ -16,16 +16,18 @@ export function BlockContainer({
   children,
   ...divProps
 }: BlockContainer) {
+  const ref = React.useRef<HTMLDivElement>(null)
+
   return (
     <>
       <div
         {...divProps}
         className={twMerge("relative", BLOCK_ITEM_CLASSNAME, className)}
       >
-        <div className={twMerge("relative h-fit group")}>
+        <div ref={ref} className={twMerge("relative h-fit group duration-200 rounded-md px-1")}>
           <LeftBlockActions blockIndex={index} />
           <div className="block-content">{children}</div>
-          <RightBlockActions blockIndex={index} />
+          <RightBlockActions blockIndex={index} BlockContainerRef={ref} />
         </div>
         <div className="add-block-inpt-container" />
       </div>

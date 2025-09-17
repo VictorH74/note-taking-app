@@ -2,8 +2,8 @@ import { BLOCK_INPUT_CLASSNAME } from "@/lib/utils/constants";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { UrlOptionsMenu } from "./components/UrlOptionsMenu";
-import { createPortal } from "react-dom";
 import { BlockInputProps, useBlockInput } from "./useBlockInput";
+import { InlineUrlDataChangeModal } from "./components/InlineUrlDataChangeModal";
 
 export function BlockInput(props: BlockInputProps) {
   const hook = useBlockInput(props);
@@ -22,15 +22,22 @@ export function BlockInput(props: BlockInputProps) {
         ...hook.handlers,
       })}
       {hook.urlOptionsMenuData &&
-        createPortal(
+        (
           <UrlOptionsMenu
             {...hook.urlOptionsMenuData}
             onClose={(inputVChanged) => {
               hook.setUrlOptionsMenuData(null);
               if (inputVChanged) hook.handlers.onInput();
             }}
-          />,
-          document.body
+          />
+        )}
+      {hook.inlineUrlChangeData &&
+        (
+          <InlineUrlDataChangeModal
+            {...hook.inlineUrlChangeData}
+            onClose={() => hook.setInlineUrlChangeData(null)}
+            syncBlockInput={hook.handlers.onInput}
+          />
         )}
     </>
   );
