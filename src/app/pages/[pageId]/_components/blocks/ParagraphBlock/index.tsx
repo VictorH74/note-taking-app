@@ -60,7 +60,6 @@ export function ParagraphBlock({
 
   const handleInput = (innerHTML: string, textContent: string) => {
     if (!onChange) return;
-
     const blockGenerationFunc = blockGenerationString[textContent];
 
     if (blockGenerationFunc != undefined) {

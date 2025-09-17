@@ -12,6 +12,7 @@ export function BlockInput(props: BlockInputProps) {
     <>
       {React.createElement(props.tag || "div", {
         ref: props.ref || hook.inputRef,
+        id: hook.id,
         className: twMerge(
           "h-fit w-full relative outline-none whitespace-pre-wrap cursor-text",
           hook.id,
@@ -31,12 +32,14 @@ export function BlockInput(props: BlockInputProps) {
             }}
           />
         )}
-      {hook.inlineUrlChangeData &&
+      {hook.inlineUrlChangeData && hook.inlineUrlChangeData.blockInputId == hook.id &&
         (
           <InlineUrlDataChangeModal
             {...hook.inlineUrlChangeData}
             onClose={hook.hideInlineUrlChangeModal}
-            syncBlockInput={hook.handlers.onInput}
+            syncBlockInput={() =>
+              hook.handlers.onInput()
+            }
           />
         )}
     </>

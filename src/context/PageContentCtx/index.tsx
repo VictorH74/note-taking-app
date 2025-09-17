@@ -108,9 +108,9 @@ export function PageContentProvider({
     if (!pageContent) return;
 
     const blockId = pageContent.blockSortIdList[index];
-
     const block = pageContent.blockList.find(b => b.id == blockId)
 
+    console.log('changePageContentBlockListItem', blockId, itemChangedData)
 
     if (!block) return
 

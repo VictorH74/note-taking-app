@@ -232,3 +232,12 @@ export const getCaretIndex = (element: Element) => {
   preRange.setEnd(range.endContainer, range.endOffset);
   return preRange.toString().length;
 };
+
+export const isUrl = (str: string) => {
+  try {
+    new URL(str);
+    return true;
+  } catch {
+    return false;
+  }
+};

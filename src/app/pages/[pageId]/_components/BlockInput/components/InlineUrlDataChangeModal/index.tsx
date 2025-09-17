@@ -6,6 +6,7 @@ interface InlineUrlDataChangeModalProps {
     linkEl: HTMLAnchorElement
     syncBlockInput(): void
     onClose(): void
+    blockInputId: string
 }
 
 export function InlineUrlDataChangeModal(props: InlineUrlDataChangeModalProps) {

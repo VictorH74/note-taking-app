@@ -10,6 +10,7 @@ import {
   getElementFirstBlockInput,
   getNodeFromIndex,
   isInlineLinkPreviewNode,
+  isUrl,
   replaceBgColorStyle,
   sanitizeText,
 } from "@/lib/utils/functions";
@@ -39,6 +40,7 @@ export interface BlockInputProps {
 const placeholderClassName =
   "after:content-[attr(data-placeholder)] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-0 after:text-gray-400 after:pointer-events-none";
 
+// TODO: create inline url with input "[title](https://example.com) "
 export const useBlockInput = ({
   useBreakLineElement = true,
   ...props
@@ -304,7 +306,7 @@ export const useBlockInput = ({
         if (!preRange.startContainer.parentElement.classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)) {
           const link = range.startContainer.parentElement as HTMLAnchorElement
 
-          showInlineUrlChangeModal(link)
+          showInlineUrlChangeModal(link, id)
           return
         }
       }
@@ -367,9 +369,9 @@ export const useBlockInput = ({
   };
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLElement>) => {
-    // e.clipboardData.types.forEach((v) =>
-    //   console.log(v, e.clipboardData.getData(v))
-    // );
+    e.clipboardData.types.forEach((v) =>
+      console.log(v, e.clipboardData.getData(v))
+    );
 
     const sel = window.getSelection();
     const range = sel?.getRangeAt(0);
@@ -406,16 +408,21 @@ export const useBlockInput = ({
         );
       }
       return addCodeBlock(htmlContent, language, props.inputBlockIndex + 1);
-    } else if (e.clipboardData.types.includes("text/html")) {
-      if (e.clipboardData.types.includes("text/link-preview")) {
-        e.preventDefault();
 
+    } else if (e.clipboardData.types.includes("text/html")) {
+      e.preventDefault();
+      if (e.clipboardData.types.includes("text/link-preview")) {
         const linkPreview = JSON.parse(
           e.clipboardData.getData("text/link-preview")
         ) as LinkPreviewT;
 
         createInlineUrl(linkPreview);
+        return handleInput();
+      }
 
+      const data = e.clipboardData.getData("text/plain")
+      if (isUrl(data)) {
+        createInlineUrl({ title: data, url: data });
         return handleInput();
       }
 
@@ -440,8 +447,14 @@ export const useBlockInput = ({
       range.collapse(true);
 
       handleInput();
-      e.preventDefault();
     } else if (e.clipboardData.types.includes("text/plain")) {
+      const data = e.clipboardData.getData("text/plain")
+      if (isUrl(data)) {
+        createInlineUrl({ title: data, url: data });
+      }
+
+      handleInput();
+      e.preventDefault();
     }
   };
 
@@ -588,5 +601,6 @@ export const useBlockInput = ({
     },
     hideInlineUrlChangeModal,
     setUrlOptionsMenuData,
+    getInputRef,
   };
 };

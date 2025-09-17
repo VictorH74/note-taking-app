@@ -52,18 +52,25 @@ export const UrlOptionsMenu = (props: UrlOptionsMenuProps) => {
       INLINE_LINK_PREVIEW_CLASSNAME
     );
 
-    const faviconImg = document.createElement("img");
-    faviconImg.src = props.previewData.favicon_url;
-    faviconImg.setAttribute(
-      "style",
-      "width:1.2em;height:1.2em;border-radius:3px;vertical-align:-0.22em;margin-inline-end:0.3em;display:inline;"
-    );
+    if (props.previewData.favicon_url) {
+      const faviconImg = document.createElement("img");
+      faviconImg.src = props.previewData.favicon_url;
+      faviconImg.setAttribute(
+        "style",
+        "width:1.2em;height:1.2em;border-radius:3px;vertical-align:-0.22em;margin-inline-end:0.3em;display:inline;"
+      );
+      props.targetEl.appendChild(faviconImg)
+    } else {
+      // TODO: use "open-graph-scraper" package to get url preview
+    }
+
     const titleSpan = document.createElement("span");
     titleSpan.textContent = props.previewData.title;
     titleSpan.setAttribute("style", FORMATTING_STYLE.bold[0].concat(""));
 
     props.targetEl.innerHTML = "";
-    props.targetEl.append(faviconImg, titleSpan);
+    props.targetEl.appendChild(titleSpan);
+
 
     props.onClose(true);
   };

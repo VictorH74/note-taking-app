@@ -33,11 +33,12 @@ interface TextSelectionCtxProps {
   hideTextFormattingActionMenu: () => void;
   applyRemoveFormatting(formatting: FormattingT): void;
   onHideFActionMenuListener(func: () => void): void;
-  showInlineUrlChangeModal(link: HTMLAnchorElement): void
+  showInlineUrlChangeModal(link: HTMLAnchorElement, blockInputId: string): void
   hideInlineUrlChangeModal(): void
   inlineUrlChangeData: {
     position: PositionT
     linkEl: HTMLAnchorElement
+    blockInputId: string,
   } | null
 }
 
@@ -61,11 +62,12 @@ export function TextSelectionProvider({
 
   const { pageContent, changePageContentBlockListItem } = usePageContent();
 
-  const showInlineUrlChangeModal = (link: HTMLAnchorElement) => {
-    const { top, left, height } = link.getBoundingClientRect();
+  const showInlineUrlChangeModal = (linkEl: HTMLAnchorElement, blockInputId: string) => {
+    const { top, left, height } = linkEl.getBoundingClientRect();
     setInlineUrlChangeData({
       position: { left, top: top + height },
-      linkEl: link
+      linkEl,
+      blockInputId,
     })
   }
   const hideInlineUrlChangeModal = () => setInlineUrlChangeData(null)
@@ -253,7 +255,7 @@ export function TextSelectionProvider({
         if (!link.classList.contains(INLINE_LINK_PREVIEW_CLASSNAME)) {
           link.onmouseover = () => {
             scheduledShowInlineUrlChangeModalFuncRef.current = setTimeout(() => {
-              showInlineUrlChangeModal(link)
+              showInlineUrlChangeModal(link, inputEl.getAttribute('id')!)
             }, 600);
           }
           link.onmouseleave = () => {
