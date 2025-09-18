@@ -46,6 +46,7 @@ interface ContentListCtxProps {
   ): void;
   addNewHeadingBlock: (
     type: HeadingItemTypeT,
+    text?: string,
     newIndex?: number,
     replace?: boolean
   ) => void;
@@ -110,8 +111,6 @@ export function PageContentProvider({
     const blockId = pageContent.blockSortIdList[index];
     const block = pageContent.blockList.find(b => b.id == blockId)
 
-    console.log('changePageContentBlockListItem', blockId, itemChangedData)
-
     if (!block) return
 
     Object.assign(block, itemChangedData)
@@ -124,17 +123,16 @@ export function PageContentProvider({
     blockChangeDebounceTimeoutRef.current[block.id] = setTimeout(async () => {
       const updateAction = () => pageService.updateBlock(block.id, pageContent.id, itemChangedData)
       if (FooObjRef.current.has(block.id)) {
-        console.log('freezed')
         FooObjRef.current.addBlockIdRemovedListener(block.id, updateAction)
         return;
       }
       await updateAction()
-      console.log('updated')
     }, 1000 * 2);
   };
 
   const addNewHeadingBlock = (
     type: HeadingItemTypeT,
+    text: string = '',
     newIndex?: number,
     replace?: boolean
   ) => {
@@ -142,9 +140,11 @@ export function PageContentProvider({
 
     const baseData = {
       id: `${type}-${Date.now()}`,
-      text: "",
+      text,
       type: type,
     };
+
+    console.log(baseData)
 
     const newHeadingBlockByType: Record<HeadingItemTypeT, BlockT> = {
       heading1: baseData as Heading1BlockT,

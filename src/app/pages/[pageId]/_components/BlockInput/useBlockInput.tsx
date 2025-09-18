@@ -10,7 +10,7 @@ import {
   getElementFirstBlockInput,
   getNodeFromIndex,
   isInlineLinkPreviewNode,
-  isUrl,
+  isValidUrl,
   replaceBgColorStyle,
   sanitizeText,
 } from "@/lib/utils/functions";
@@ -35,7 +35,14 @@ export interface BlockInputProps {
   onFocus?: (e: React.FocusEvent<HTMLElement>) => void;
   onBlur?: (e: React.FocusEvent<HTMLElement>) => void;
   onInput(innerHTML: string, textContent: string): void | string;
+  // onInput(innerHTML: string, textContent: string): void | string;
 }
+
+type CopyEventDuplicableBlockData = {
+  blockType: string
+}
+
+// const duplicableBlockTypes: BlockT['type'][] = ['heading1', 'heading2', 'heading3']
 
 const placeholderClassName =
   "after:content-[attr(data-placeholder)] after:absolute after:top-1/2 after:-translate-y-1/2 after:left-0 after:text-gray-400 after:pointer-events-none";
@@ -53,7 +60,7 @@ export const useBlockInput = ({
     "onClose"
   > | null>(null)
 
-  const { addNewParagraphBlock, pageContent, addCodeBlock } = usePageContent();
+  const { addNewParagraphBlock, pageContent, addCodeBlock, addNewHeadingBlock } = usePageContent();
   const {
     inlineUrlChangeData,
     showTextFormattingActionMenu,
@@ -62,6 +69,12 @@ export const useBlockInput = ({
     showInlineUrlChangeModal,
     hideInlineUrlChangeModal
   } = useTextSelection();
+
+  const duplicateBlock = React.useMemo(() => ({
+    'heading1': (htmlStr: string) => addNewHeadingBlock('heading1', htmlStr, props.inputBlockIndex, true),
+    'heading2': (htmlStr: string) => addNewHeadingBlock('heading2', htmlStr, props.inputBlockIndex, true),
+    'heading3': (htmlStr: string) => addNewHeadingBlock('heading3', htmlStr, props.inputBlockIndex, true)
+  }), [])
 
   React.useEffect(() => {
     const inputRef = getInputRef();
@@ -368,6 +381,32 @@ export const useBlockInput = ({
     // }
   };
 
+  const handleCopy = (e: React.ClipboardEvent<HTMLElement>) => {
+    const copiedText = window.getSelection()?.toString()
+
+    if (!copiedText) return
+
+    const input = getInputRef()!
+    const inputBlockId = pageContent!.blockSortIdList[props.inputBlockIndex]
+    let typeIndex = 0
+    const duplicableBlockTypes = Object.keys(duplicateBlock)
+    const isDuplicableBlock = duplicableBlockTypes.some((type, index) => {
+      typeIndex = index
+      return inputBlockId.startsWith(type)
+    })
+
+    if (input.textContent == copiedText && isDuplicableBlock) {
+      const data: CopyEventDuplicableBlockData = {
+        blockType: duplicableBlockTypes[typeIndex],
+      }
+      e.clipboardData.setData('vhnote-taking-data', JSON.stringify(data))
+      e.clipboardData.setData("text/plain", copiedText);
+      e.clipboardData.setData("text/html", input.innerHTML);
+    }
+
+    e.preventDefault()
+  }
+
   const handlePaste = async (e: React.ClipboardEvent<HTMLElement>) => {
     e.clipboardData.types.forEach((v) =>
       console.log(v, e.clipboardData.getData(v))
@@ -382,7 +421,18 @@ export const useBlockInput = ({
       range.deleteContents();
     }
 
-    if (e.clipboardData.types.includes("vscode-editor-data")) {
+    if (e.clipboardData.types.includes("vhnote-taking-data") && pageContent!.blockSortIdList[props.inputBlockIndex].startsWith('paragraph')) {
+      e.preventDefault();
+
+      const data: CopyEventDuplicableBlockData = JSON.parse(e.clipboardData.getData('vhnote-taking-data'))
+
+      const html = e.clipboardData.getData("text/html");
+      const fragmentMatch = html.match(/<!--StartFragment-->([\s\S]*?)<!--EndFragment-->/);
+      const fragment = fragmentMatch ? fragmentMatch[1] : html;
+
+      duplicateBlock[data.blockType as keyof typeof duplicateBlock](fragment)
+
+    } else if (e.clipboardData.types.includes("vscode-editor-data")) {
       e.preventDefault();
       const vsCodeEditorData = JSON.parse(
         e.clipboardData.getData("vscode-editor-data")
@@ -411,6 +461,7 @@ export const useBlockInput = ({
 
     } else if (e.clipboardData.types.includes("text/html")) {
       e.preventDefault();
+
       if (e.clipboardData.types.includes("text/link-preview")) {
         const linkPreview = JSON.parse(
           e.clipboardData.getData("text/link-preview")
@@ -420,9 +471,11 @@ export const useBlockInput = ({
         return handleInput();
       }
 
+      // TODO: ducplicated: ...
       const data = e.clipboardData.getData("text/plain")
-      if (isUrl(data)) {
-        createInlineUrl({ title: data, url: data });
+      const url = isValidUrl(data)
+      if (url) {
+        createInlineUrl({ title: url, url });
         return handleInput();
       }
 
@@ -448,9 +501,11 @@ export const useBlockInput = ({
 
       handleInput();
     } else if (e.clipboardData.types.includes("text/plain")) {
+      // TODO: ducplicated: ...
       const data = e.clipboardData.getData("text/plain")
-      if (isUrl(data)) {
-        createInlineUrl({ title: data, url: data });
+      const url = isValidUrl(data)
+      if (url) {
+        createInlineUrl({ title: url, url });
       }
 
       handleInput();
@@ -597,7 +652,8 @@ export const useBlockInput = ({
       onSelect: handleSelect,
       onInput: handleInput,
       onPaste: handlePaste,
-      onBlur: handleBlur
+      onBlur: handleBlur,
+      onCopy: handleCopy
     },
     hideInlineUrlChangeModal,
     setUrlOptionsMenuData,

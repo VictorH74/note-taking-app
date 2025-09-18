@@ -38,17 +38,17 @@ export function AddBlockModal({
       {
         icon: TitleIcon,
         title: "Heading 1",
-        createBlockFunc: () => addNewHeadingBlock("heading1", newBlockIndex),
+        createBlockFunc: () => addNewHeadingBlock("heading1", '', newBlockIndex),
       },
       {
         icon: TitleIcon,
         title: "Heading 2",
-        createBlockFunc: () => addNewHeadingBlock("heading2", newBlockIndex),
+        createBlockFunc: () => addNewHeadingBlock("heading2", '', newBlockIndex),
       },
       {
         icon: TitleIcon,
         title: "Heading 3",
-        createBlockFunc: () => addNewHeadingBlock("heading3", newBlockIndex),
+        createBlockFunc: () => addNewHeadingBlock("heading3", '', newBlockIndex),
       },
       {
         icon: TextFieldsIcon,

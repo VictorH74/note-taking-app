@@ -10,6 +10,7 @@ import {
   TextColorFormattingT,
 } from "@/lib/utils/constants";
 import { replaceBgColorStyle } from "@/lib/utils/functions";
+import { ColorPicker } from "./components/ColorPicker";
 
 type ActionBtnDataListT = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,
@@ -108,8 +109,9 @@ export const useFormattingActionBtns = (props: FormattingActionBtnsProps) => {
           className:
             "uppercase font-medium flex justify-center items-center px-3 relative",
           onClick: (e) => {
-            const { left, height } = e.currentTarget.getBoundingClientRect();
-            setColorPickerPos({ left, top: height });
+            const { height } = e.currentTarget.getBoundingClientRect();
+            const { width } = FormattingActionBtnsRef.current!.getBoundingClientRect()
+            setColorPickerPos({ left: width, top: height + 5 });
           },
           setElStyle: (el) => {
             const spanel = el.getElementsByClassName('color-formatting-btn').item(0)

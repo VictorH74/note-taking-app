@@ -62,6 +62,9 @@ export function HeadingBlock(props: HeadingContentProps) {
     });
   };
 
+  const handleOnPressedEnterAtStart = () => {
+    addNewParagraphBlock(props.index);
+  };
   const handleOnPressedEnterAtEnd = () => {
     addNewParagraphBlock(props.index + 1);
   };
@@ -102,6 +105,7 @@ export function HeadingBlock(props: HeadingContentProps) {
           text={props.item.text}
           placeholder={headingItemData.placeholder}
           onInput={handleInput}
+          onPressedEnterAtStart={handleOnPressedEnterAtStart}
           onPressedEnterAtEnd={handleOnPressedEnterAtEnd}
           onPressedBackspaceAtStart={handleOnPressedBackspaceAtStart}
         />

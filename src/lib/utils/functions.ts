@@ -233,11 +233,24 @@ export const getCaretIndex = (element: Element) => {
   return preRange.toString().length;
 };
 
-export const isUrl = (str: string) => {
+export const isValidUrl = (input: string): string | null => {
   try {
-    new URL(str);
-    return true;
+    // Tenta criar URL diretamente
+    const url = new URL(input);
+    if (url.protocol === "http:" || url.protocol === "https:") {
+      return url.href;
+    }
+    return null;
   } catch {
-    return false;
+    // Só adiciona "http://www." se não começar com protocolo
+    if (!/^https?:\/\//i.test(input)) {
+      try {
+        const url = new URL("http://www." + input);
+        return url.href;
+      } catch {
+        return null;
+      }
+    }
+    return null;
   }
 };

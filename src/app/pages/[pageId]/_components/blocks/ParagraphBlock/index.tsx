@@ -27,9 +27,9 @@ export function ParagraphBlock({
 
   const blockGenerationString = React.useMemo<Record<string, () => void>>(
     () => ({
-      "# ": () => addNewHeadingBlock("heading1", index, true),
-      "## ": () => addNewHeadingBlock("heading2", index, true),
-      "### ": () => addNewHeadingBlock("heading3", index, true),
+      "# ": () => addNewHeadingBlock("heading1", '', index, true),
+      "## ": () => addNewHeadingBlock("heading2", '', index, true),
+      "### ": () => addNewHeadingBlock("heading3", '', index, true),
       "- ": () => addNewListItemBlock("bulletlistitem", undefined, index, true),
       "1. ": () =>
         addNewListItemBlock("numberedlistitem", undefined, index, true),

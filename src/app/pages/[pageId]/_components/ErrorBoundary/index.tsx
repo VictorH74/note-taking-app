@@ -13,7 +13,6 @@ export class ErrorBoundary extends React.Component<BoundaryProps, { hasError: bo
     }
 
     static getDerivedStateFromError(err: Error) {
-        console.log('**** error ****', err)
         return { hasError: true };
     }
 

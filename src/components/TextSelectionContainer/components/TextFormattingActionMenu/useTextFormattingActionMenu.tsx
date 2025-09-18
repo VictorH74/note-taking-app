@@ -19,11 +19,9 @@ export const useTextFormattingActionMenu = () => {
         top: rangeTop,
         left: RangeLeft
       })
-      console.log('setRangePos')
       return;
     }
     setRangePos(null)
-    console.log('setRangePos to null')
   }, [selectedRange]);
 
   React.useEffect(() => {

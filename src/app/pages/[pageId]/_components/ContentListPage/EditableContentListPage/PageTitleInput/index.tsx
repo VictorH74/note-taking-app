@@ -8,8 +8,7 @@ interface PageTitleInputProps {
 }
 
 export function PageTitleInput(props: PageTitleInputProps) {
-    const { pageContent } = usePageContent()
-
+    const { pageContent, addNewParagraphBlock } = usePageContent()
 
     const handleKeyDown = (e: React.KeyboardEvent<HTMLParagraphElement>) => {
         const sel = window.getSelection();
@@ -21,6 +20,11 @@ export function PageTitleInput(props: PageTitleInputProps) {
         const textContent = e.currentTarget.textContent || "";
 
         const keyAction = {
+            Enter: () => {
+                if (textContent.length == caretIndex)
+                    addNewParagraphBlock(0, "");
+                e.preventDefault();
+            },
             ArrowRight: () => {
                 if (
                     caretIndex >= textContent.length && pageContent!.blockSortIdList.length > 0

@@ -50,8 +50,6 @@ export default async function Page({
 
     );
 
-  console.log('pageMetadata.isPublic', pageMetadata.isPublic)
-
   if (pageMetadata.isPublic)
     return (
       <ErrorBoundary fallback={<ErrorComp error={new Error()} />}>
