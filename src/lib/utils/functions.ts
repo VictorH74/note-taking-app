@@ -234,23 +234,34 @@ export const getCaretIndex = (element: Element) => {
 };
 
 export const isValidUrl = (input: string): string | null => {
+  function hasValidHostname(hostname: string): boolean {
+    // Verifica se é IP válido (IPv4 simples)
+    const ipv4Pattern =
+      /^(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)(\.(25[0-5]|2[0-4]\d|1\d{2}|[1-9]?\d)){3}$/;
+    if (ipv4Pattern.test(hostname)) return true;
+    // Verifica se hostname tem pelo menos um ponto e um TLD válido (2+ letras)
+    const domainPattern = /^([a-z\d-]+\.)+[a-z]{2,}$/i;
+    return domainPattern.test(hostname);
+  }
   try {
-    // Tenta criar URL diretamente
     const url = new URL(input);
     if (url.protocol === "http:" || url.protocol === "https:") {
-      return url.href;
+      if (hasValidHostname(url.hostname)) {
+        return url.href;
+      }
+      return null;
     }
     return null;
   } catch {
-    // Só adiciona "http://www." se não começar com protocolo
-    if (!/^https?:\/\//i.test(input)) {
-      try {
-        const url = new URL("http://www." + input);
+    // Tenta adicionar http:// e testar
+    try {
+      const url = new URL("http://" + input);
+      if (hasValidHostname(url.hostname)) {
         return url.href;
-      } catch {
-        return null;
       }
+      return null;
+    } catch {
+      return null;
     }
-    return null;
   }
 };

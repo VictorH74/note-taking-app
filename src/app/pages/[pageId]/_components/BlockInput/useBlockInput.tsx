@@ -2,7 +2,7 @@
 import Prism from "prismjs";
 import { usePageContent } from "@/hooks/usePageContent";
 import { useTextSelection } from "@/hooks/useTextSelection";
-import { FORMATTING_STYLE, INLINE_LINK_PREVIEW_CLASSNAME, TextColorFormattingT } from "@/lib/utils/constants";
+import { BLOCK_INPUT_CLASSNAME, FORMATTING_STYLE, INLINE_LINK_PREVIEW_CLASSNAME, TextColorFormattingT } from "@/lib/utils/constants";
 import {
   applyFocus,
   applyFocusByIndex,
@@ -382,9 +382,17 @@ export const useBlockInput = ({
   };
 
   const handleCopy = (e: React.ClipboardEvent<HTMLElement>) => {
-    const copiedText = window.getSelection()?.toString()
+    e.preventDefault()
+    const sel = window.getSelection();
+    if (!sel) return;
 
+    const range = sel?.getRangeAt(0);
+    if (!range) return;
+
+    const copiedText = sel.toString()
     if (!copiedText) return
+
+    e.clipboardData.setData("text/plain", copiedText);
 
     const input = getInputRef()!
     const inputBlockId = pageContent!.blockSortIdList[props.inputBlockIndex]
@@ -396,15 +404,38 @@ export const useBlockInput = ({
     })
 
     if (input.textContent == copiedText && isDuplicableBlock) {
+
       const data: CopyEventDuplicableBlockData = {
         blockType: duplicableBlockTypes[typeIndex],
       }
       e.clipboardData.setData('vhnote-taking-data', JSON.stringify(data))
-      e.clipboardData.setData("text/plain", copiedText);
       e.clipboardData.setData("text/html", input.innerHTML);
+      return
     }
 
-    e.preventDefault()
+    const selectedNodes = range.cloneContents().childNodes;
+
+    if (selectedNodes.length > 1) {
+      let htmlStr = ''
+      selectedNodes.forEach(n =>
+        htmlStr += n.nodeType == Node.ELEMENT_NODE ?
+          (n as HTMLElement).outerHTML
+          : new XMLSerializer().serializeToString(n)
+      )
+      e.clipboardData.setData("text/html", htmlStr);
+    } else {
+      const parentElement = range.startContainer.parentElement!
+
+      if (parentElement.classList.contains(BLOCK_INPUT_CLASSNAME)) {
+        const node = document.createTextNode(copiedText)
+        const str = new XMLSerializer().serializeToString(node)
+        e.clipboardData.setData("text/html", str);
+      } else {
+        const clone = parentElement.cloneNode() as HTMLElement
+        clone.textContent = copiedText
+        e.clipboardData.setData("text/html", clone.outerHTML);
+      }
+    }
   }
 
   const handlePaste = async (e: React.ClipboardEvent<HTMLElement>) => {
@@ -594,6 +625,9 @@ export const useBlockInput = ({
     const div = document.createElement("div");
     div.innerHTML = sanitizeText(htmlStr);
 
+    const div2 = document.createElement("div");
+    div2.innerHTML = sanitizeText(htmlStr);
+
     const textColorFPrefix: TextColorFormattingT = "color-";
     div.childNodes.forEach((node, index) => {
       if (node.nodeType == Node.ELEMENT_NODE) {
@@ -638,6 +672,9 @@ export const useBlockInput = ({
       else cleanHtmlStr += node.textContent;
     });
 
+    // console.log('div', div.innerHTML)
+    // console.log('div2', div2.innerHTML)
+    // console.log('cleanHtmlStr', cleanHtmlStr)
     return cleanHtmlStr;
   };
 

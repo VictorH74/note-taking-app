@@ -86,7 +86,13 @@ export const UrlOptionsMenu = (props: UrlOptionsMenuProps) => {
         Preview
       </button>
       <button className={btnClassName} onClick={() => props.onClose()}>
-        URL
+        Inline Url
+      </button>
+      <button className={btnClassName} onClick={() => props.onClose()}>
+        Bockmark
+      </button>
+      <button className={btnClassName} onClick={() => props.onClose()}>
+        Mention
       </button>
     </div>,
     document.body

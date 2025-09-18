@@ -155,6 +155,8 @@ export const useFormattingActionBtns = (props: FormattingActionBtnsProps) => {
       ];
     }
 
+    console.log('selectedNodeFormattingStyleListRef', selectedNodeFormattingStyleListRef.current)
+
     // find common styles from selected nodes
     commonFormattingRef.current = new Set();
 
