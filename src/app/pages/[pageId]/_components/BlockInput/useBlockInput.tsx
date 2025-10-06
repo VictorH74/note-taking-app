@@ -60,20 +60,25 @@ export const useBlockInput = ({
     "onClose"
   > | null>(null)
 
-  const { addNewParagraphBlock, pageContent, addCodeBlock, addNewHeadingBlock } = usePageContent();
+  const { addNewParagraphBlock, pageContent, addCodeBlock, addNewHeadingBlock, addNewListItemBlock } = usePageContent();
   const {
     inlineUrlChangeData,
     showTextFormattingActionMenu,
     hideTextFormattingActionMenu,
     defineInputInlineLinkHandlers,
     showInlineUrlChangeModal,
-    hideInlineUrlChangeModal
+    hideInlineUrlChangeModal,
+    replaceElWith,
+    mergeInputChildrenByFormattingStyle,
   } = useTextSelection();
 
   const duplicateBlock = React.useMemo(() => ({
     'heading1': (htmlStr: string) => addNewHeadingBlock('heading1', htmlStr, props.inputBlockIndex, true),
     'heading2': (htmlStr: string) => addNewHeadingBlock('heading2', htmlStr, props.inputBlockIndex, true),
-    'heading3': (htmlStr: string) => addNewHeadingBlock('heading3', htmlStr, props.inputBlockIndex, true)
+    'heading3': (htmlStr: string) => addNewHeadingBlock('heading3', htmlStr, props.inputBlockIndex, true),
+    'bulletlistitem': (htmlStr: string) => addNewListItemBlock('bulletlistitem', htmlStr, 0, props.inputBlockIndex, true),
+    'checklistitem': (htmlStr: string) => addNewListItemBlock('checklistitem', htmlStr, 0, props.inputBlockIndex, true),
+    'numberedlistitem': (htmlStr: string) => addNewListItemBlock('numberedlistitem', htmlStr, 0, props.inputBlockIndex, true),
   }), [])
 
   React.useEffect(() => {
@@ -217,7 +222,7 @@ export const useBlockInput = ({
         }
       },
       ArrowUp: () => {
-        const isFirstBlockItem = props.inputBlockIndex == 0; // TODO: override to props.canFocusTopInput
+        const isFirstBlockItem = props.inputBlockIndex == 0;
 
         if (textContent.length == 0) {
 
@@ -261,7 +266,7 @@ export const useBlockInput = ({
       },
       ArrowDown: () => {
         const isLastBlockItem =
-          props.inputBlockIndex == pageContent!.blockSortIdList.length - 1; // TODO: override to props.canFocusBottomInput
+          props.inputBlockIndex == pageContent!.blockSortIdList.length - 1;
 
         if (textContent.length == 0 && !isLastBlockItem) {
           applyFocusByIndex(
@@ -381,7 +386,7 @@ export const useBlockInput = ({
     // }
   };
 
-  const handleCopy = (e: React.ClipboardEvent<HTMLElement>) => {
+  const handleCopyOrCut = (e: React.ClipboardEvent<HTMLElement>) => {
     e.preventDefault()
     const sel = window.getSelection();
     if (!sel) return;
@@ -408,6 +413,7 @@ export const useBlockInput = ({
       const data: CopyEventDuplicableBlockData = {
         blockType: duplicableBlockTypes[typeIndex],
       }
+
       e.clipboardData.setData('vhnote-taking-data', JSON.stringify(data))
       e.clipboardData.setData("text/html", input.innerHTML);
       return
@@ -452,9 +458,11 @@ export const useBlockInput = ({
       range.deleteContents();
     }
 
-    if (e.clipboardData.types.includes("vhnote-taking-data") && pageContent!.blockSortIdList[props.inputBlockIndex].startsWith('paragraph')) {
+    if (
+      e.clipboardData.types.includes("vhnote-taking-data")
+      && pageContent!.blockSortIdList[props.inputBlockIndex].startsWith('paragraph')
+    ) {
       e.preventDefault();
-
       const data: CopyEventDuplicableBlockData = JSON.parse(e.clipboardData.getData('vhnote-taking-data'))
 
       const html = e.clipboardData.getData("text/html");
@@ -517,18 +525,35 @@ export const useBlockInput = ({
 
       let lastInsertedNode: Node | null = null;
       const childNodesLength = cleanElement.childNodes.length;
+      const fragment = document.createDocumentFragment();
       for (let i = cleanElement.childNodes.length; i > 0; i--) {
         const node = cleanElement.childNodes.item(i - 1);
 
         if (i == childNodesLength) lastInsertedNode = node;
 
-        range.insertNode(node);
+        fragment.appendChild(node);
       }
 
       if (!lastInsertedNode) lastInsertedNode = cleanElement.lastChild!;
 
+      const inputRef = getInputRef()!
+      const carretIndexNode = getNodeFromIndex(inputRef, getCaretIndex(inputRef))
+
+      if (carretIndexNode && carretIndexNode.node.nodeType == Node.ELEMENT_NODE) {
+        const el = carretIndexNode.node as HTMLElement
+        replaceElWith(el, carretIndexNode.offset, carretIndexNode.offset, fragment)
+      } else {
+        range.insertNode(fragment);
+      }
       range.setStartAfter(lastInsertedNode);
-      range.collapse(true);
+
+      setTimeout(() => {
+        const caretIndex = getCaretIndex(inputRef);
+        mergeInputChildrenByFormattingStyle(inputRef)
+        const carretIndexNode = getNodeFromIndex(inputRef, caretIndex)
+        range.setStartAfter(carretIndexNode!.node)
+
+      }, 0);
 
       handleInput();
     } else if (e.clipboardData.types.includes("text/plain")) {
@@ -690,7 +715,8 @@ export const useBlockInput = ({
       onInput: handleInput,
       onPaste: handlePaste,
       onBlur: handleBlur,
-      onCopy: handleCopy
+      onCopy: handleCopyOrCut,
+      onCut: handleCopyOrCut
     },
     hideInlineUrlChangeModal,
     setUrlOptionsMenuData,

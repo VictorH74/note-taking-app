@@ -1,7 +1,6 @@
 import { BlockT } from "@/types/page";
 
-// TODO: improve name
-export class FooObj {
+export class BlockChangingManager {
   private blockIdSet = new Set<BlockT["id"]>();
   private BlockIdRemovedListener: Record<BlockT["id"], () => Promise<void>> =
     {};

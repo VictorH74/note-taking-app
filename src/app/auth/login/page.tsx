@@ -70,7 +70,10 @@ export default function LoginPage() {
       if (!credential) {
         throw new NullCredentialError();
       }
-      const idToken = await result.user.getIdToken();
+
+      const idTokenResult = await result.user.getIdTokenResult()
+      const idToken = idTokenResult.token;
+
       // TODO: use csrfToken
       // const csrfToken = getCookie('csrfToken')
 

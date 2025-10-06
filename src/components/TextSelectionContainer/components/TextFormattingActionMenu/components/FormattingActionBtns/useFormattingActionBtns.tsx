@@ -10,7 +10,6 @@ import {
   TextColorFormattingT,
 } from "@/lib/utils/constants";
 import { replaceBgColorStyle } from "@/lib/utils/functions";
-import { ColorPicker } from "./components/ColorPicker";
 
 type ActionBtnDataListT = Pick<
   React.ButtonHTMLAttributes<HTMLButtonElement>,

@@ -25,15 +25,15 @@ export function ParagraphBlock({
     addNewHeadingBlock,
   } = usePageContent();
 
-  const blockGenerationString = React.useMemo<Record<string, () => void>>(
+  const blockGenerationString = React.useMemo<Record<string, (text: string) => void>>(
     () => ({
-      "# ": () => addNewHeadingBlock("heading1", '', index, true),
-      "## ": () => addNewHeadingBlock("heading2", '', index, true),
-      "### ": () => addNewHeadingBlock("heading3", '', index, true),
-      "- ": () => addNewListItemBlock("bulletlistitem", undefined, index, true),
-      "1. ": () =>
-        addNewListItemBlock("numberedlistitem", undefined, index, true),
-      "[] ": () => addNewListItemBlock("checklistitem", undefined, index, true),
+      "# ": (htmlText) => addNewHeadingBlock("heading1", htmlText, index, true),
+      "## ": (htmlText) => addNewHeadingBlock("heading2", htmlText, index, true),
+      "### ": (htmlText) => addNewHeadingBlock("heading3", htmlText, index, true),
+      "- ": (htmlText) => addNewListItemBlock("bulletlistitem", htmlText, 0, index, true),
+      "1. ": (htmlText) =>
+        addNewListItemBlock("numberedlistitem", htmlText, 0, index, true),
+      "[] ": (htmlText) => addNewListItemBlock("checklistitem", htmlText, 0, index, true),
     }),
     [addNewHeadingBlock, addNewListItemBlock, index]
   );
@@ -60,10 +60,19 @@ export function ParagraphBlock({
 
   const handleInput = (innerHTML: string, textContent: string) => {
     if (!onChange) return;
-    const blockGenerationFunc = blockGenerationString[textContent];
+
+    let blockGenerationFunc: ((text: string) => void) | null = null;
+    let blockGenerationKey: string = '';
+    for (const key of Object.keys(blockGenerationString)) {
+      if (textContent.startsWith(key)) {
+        blockGenerationFunc = blockGenerationString[key];
+        blockGenerationKey = key
+        break;
+      }
+    }
 
     if (blockGenerationFunc != undefined) {
-      blockGenerationFunc();
+      blockGenerationFunc(innerHTML.replace(blockGenerationKey, ''));
       return;
     }
 

@@ -19,13 +19,14 @@ export default async function Page({
   params: Promise<{ pageId: string }>;
 }) {
   const { pageId } = await params;
-  const pageMetadata = await pageService.getPageMetadata(pageId);
+
+  const [pageMetadata, user] = await Promise.all([
+    pageService.getPageMetadata(pageId),
+    getCurrentUser()
+  ])
 
   if (!pageMetadata)
     notFound();
-
-
-  const user = await getCurrentUser();
 
   const owner = user?.email == pageMetadata.ownerId;
 

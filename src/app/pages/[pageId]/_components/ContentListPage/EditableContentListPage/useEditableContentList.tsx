@@ -238,7 +238,7 @@ export const useEditableContentList = (
     if (!retrivedPageContent) return;
 
     setPageContent(retrivedPageContent);
-    // setPageContent(retrivedPageContent);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [retrivedPageContent]);
 

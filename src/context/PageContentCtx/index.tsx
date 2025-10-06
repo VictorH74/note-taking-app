@@ -18,7 +18,7 @@ import {
 } from "@/types/page";
 import { applyFocus, getElementFirstBlockInput } from "@/lib/utils/functions";
 import React from "react";
-import { FooObj } from "./Foo";
+import { BlockChangingManager } from "./BlockChangingManager";
 
 export type BlockListType = PageContentT["blockList"][number];
 
@@ -40,6 +40,7 @@ interface ContentListCtxProps {
   ): void;
   addNewListItemBlock(
     type: ListItemTypeT,
+    text?: string,
     indent?: number,
     newIndex?: number,
     replace?: boolean
@@ -77,7 +78,7 @@ export function PageContentProvider({
 }) {
   const debounceTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
 
-  const FooObjRef = React.useRef(new FooObj());
+  const BlockChangingManagerRef = React.useRef(new BlockChangingManager());
   const blockChangeDebounceTimeoutRef = React.useRef<Record<BlockT['id'], NodeJS.Timeout | null>>({});
 
   const [pageContent, setPageContent] = React.useState<PageContentT | null>(
@@ -122,8 +123,8 @@ export function PageContentProvider({
     // TODO: use pako to compress content before sending to API
     blockChangeDebounceTimeoutRef.current[block.id] = setTimeout(async () => {
       const updateAction = () => pageService.updateBlock(block.id, pageContent.id, itemChangedData)
-      if (FooObjRef.current.has(block.id)) {
-        FooObjRef.current.addBlockIdRemovedListener(block.id, updateAction)
+      if (BlockChangingManagerRef.current.has(block.id)) {
+        BlockChangingManagerRef.current.addBlockIdRemovedListener(block.id, updateAction)
         return;
       }
       await updateAction()
@@ -171,13 +172,14 @@ export function PageContentProvider({
 
   function addNewListItemBlock(
     type: ListItemTypeT,
-    indent: number,
+    text: string = '',
+    indent?: number,
     newIndex?: number,
     replace?: boolean
   ) {
     const baseData = {
       id: `${type}-${Date.now()}`,
-      text: "",
+      text,
       type: type,
       indent: indent || null,
     };
@@ -248,14 +250,14 @@ export function PageContentProvider({
     promises.push(pageService.updatePageContent(_pageContent.id, { blockSortIdList: newPageBlockSortIdList }))
 
     // TODO: try / catch
-    FooObjRef.current.add(item.id)
+    BlockChangingManagerRef.current.add(item.id)
 
     Promise.all(promises).catch((err) => {
       console.error(err)
       alert(err)
       // TODO: handle error
     }).finally(() => {
-      FooObjRef.current.remove(item.id)
+      BlockChangingManagerRef.current.remove(item.id)
     })
 
     setPageContent(() => _pageContent);

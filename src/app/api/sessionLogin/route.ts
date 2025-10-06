@@ -4,7 +4,7 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
-  const { idToken /*csrfToken*/ } = await req.json();
+  const { idToken /*csrfToken*/ } = (await req.json()) as { idToken: string };
 
   // TODO: Guard against CSRF attacks.
   // if (csrfToken !== req.cookies.csrfToken) {
@@ -12,7 +12,9 @@ export async function POST(req: Request) {
   //   return;
   // }
 
-  const expiresIn = 60 * 60 * 24 * 5 * 1000;
+  const expiresIn = 1000 * 60 * 60 * 24 * 7;
+
+  await authAdmin.verifyIdToken(idToken);
 
   try {
     const sessionCookie = await authAdmin.createSessionCookie(idToken, {

@@ -20,10 +20,10 @@ export function BulletListItemBlock({
     usePageContent();
 
   const handleOnPressedEnterAtStart = () => {
-    addNewListItemBlock(item.type, item.indent, index);
+    addNewListItemBlock(item.type, '', item.indent, index);
   };
   const handleOnPressedEnterAtEnd = () => {
-    addNewListItemBlock(item.type, item.indent, index + 1);
+    addNewListItemBlock(item.type, '', item.indent, index + 1);
   };
   const handleOnPressedBackspaceAtStart = () => {
     const block = pageContent!.blockList.find(b => b.id == pageContent!.blockSortIdList[index])

@@ -108,6 +108,8 @@ export class MergedNodeList {
         mergeableNodeList.push(clonedNode);
       });
 
+      console.log("mergeableNodeList", mergeableNodeList);
+
       return new MergedNodeList(mergeableNodeList);
     }
   };

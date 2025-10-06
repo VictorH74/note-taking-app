@@ -57,6 +57,7 @@ export const sanitizeText = (text: string) => {
           /^(-|)([0-9]{1,4}px|[\d]{1,2}(.[\d]{1,2}|)(rem|em))$/,
         ],
         display: [/^[a-z]*/],
+        cursor: [/pointer/],
       },
     },
   });

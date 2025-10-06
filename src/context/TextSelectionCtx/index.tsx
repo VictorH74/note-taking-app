@@ -34,6 +34,8 @@ interface TextSelectionCtxProps {
   applyRemoveFormatting(formatting: FormattingT): void;
   onHideFActionMenuListener(func: () => void): void;
   showInlineUrlChangeModal(link: HTMLAnchorElement, blockInputId: string): void
+  replaceElWith(el: HTMLElement, startOffset: number, endOffset: number, ...nodes: Node[]): void
+  mergeInputChildrenByFormattingStyle(inputEl: Element): Range | undefined
   hideInlineUrlChangeModal(): void
   inlineUrlChangeData: {
     position: PositionT
@@ -88,6 +90,9 @@ export function TextSelectionProvider({
   };
 
   const hideTextFormattingActionMenu = () => {
+    // const selection = window.getSelection();
+    // if (selection?.toString()) return
+
     selectedNodeFormattingStyleListRef.current = [];
     commonFormattingRef.current = new Set();
 
@@ -119,7 +124,12 @@ export function TextSelectionProvider({
       }
     }
 
-    const newRange = mergeNodesByFStyle();
+    const blockInputId = inputIdRef.current;
+    if (!blockInputId) return;
+    const blockInputEl = document.getElementsByClassName(blockInputId).item(0);
+    if (!blockInputEl) return;
+
+    const newRange = mergeInputChildrenByFormattingStyle(blockInputEl);
     if (newRange) setSelectedRange(newRange);
 
     // update 'pageContent' with changed item
@@ -154,13 +164,9 @@ export function TextSelectionProvider({
     return false;
   };
 
-  const mergeNodesByFStyle = () => {
+  const mergeInputChildrenByFormattingStyle = (inputEl: Element) => {
     const range = window.getSelection()?.getRangeAt(0);
     if (!range) return;
-    const blockInputId = inputIdRef.current;
-    if (!blockInputId) return;
-    const blockInputEl = document.getElementsByClassName(blockInputId).item(0);
-    if (!blockInputEl) return;
 
     type SelectRangeT = {
       node: Node;
@@ -172,7 +178,7 @@ export function TextSelectionProvider({
     const getNodeText = (node: Node) => node.textContent || "";
 
     let isSelectedNode = false;
-    const mergedNodeList = new MergedNodeList.Builder(blockInputEl.childNodes)
+    const mergedNodeList = new MergedNodeList.Builder(inputEl.childNodes)
       .onBeforeMerging((cloneNode, originalNode) => {
         isSelectedNode = range.intersectsNode(originalNode);
         return cloneNode;
@@ -224,7 +230,7 @@ export function TextSelectionProvider({
       })
       .build();
 
-    blockInputEl.replaceChildren(...mergedNodeList.list);
+    inputEl.replaceChildren(...mergedNodeList.list);
 
     const getRangeSelection: (selectRange: SelectRangeT) => [Node, number] = ({
       node,
@@ -239,7 +245,7 @@ export function TextSelectionProvider({
       range.setEnd(...getRangeSelection(selectRangeEnd as SelectRangeT));
     }
 
-    defineInputInlineLinkHandlers(blockInputEl as HTMLElement);
+    defineInputInlineLinkHandlers(inputEl as HTMLElement);
 
     return range.cloneRange();
   };
@@ -350,74 +356,46 @@ export function TextSelectionProvider({
       const {
         startOffset,
         endOffset,
-        startContainer: { parentElement: parentEl },
+        startContainer: { parentElement },
       } = range;
 
-      if (!parentEl) return;
+      if (!parentElement) return;
 
-      const parentStyle = parentEl?.getAttribute("style") || "";
-      let finalStyles = parentStyle;
+      const parentStyle = parentElement?.getAttribute("style") || "";
+      let computedStyle = parentStyle;
 
       const textColorFormattingPrefix: TextColorFormattingT = "color-";
       const bgColorFormattingPrefix: BgColorFormattingT = "bg-";
       if (
         formatting.startsWith(textColorFormattingPrefix) &&
-        hasExistingTextColorStyle(finalStyles)
+        hasExistingTextColorStyle(computedStyle)
       ) {
         // remove existing text color style
-        finalStyles = replaceTextColorStyle(finalStyles, "");
+        computedStyle = replaceTextColorStyle(computedStyle, "");
       } else if (
         formatting.startsWith(bgColorFormattingPrefix) &&
-        hasExistingBgColorStyle(finalStyles)
+        hasExistingBgColorStyle(computedStyle)
       ) {
         // remove existing bg color style
-        finalStyles = replaceBgColorStyle(finalStyles, "");
+        computedStyle = replaceBgColorStyle(computedStyle, "");
       }
 
-      finalStyles = onAddStyle.concat(finalStyles);
+      computedStyle = onAddStyle.concat(computedStyle);
 
-      const parentText = parentEl.textContent || "";
-      const selectedText = parentText.slice(startOffset, endOffset);
+      const parentText = parentElement.textContent || "";
+      const selectedText = selection.toString();
 
       if (selectedText == parentText) {
-        parentEl.setAttribute("style", finalStyles);
+        parentElement.setAttribute("style", computedStyle);
         return;
       }
 
-      const getSlicedText = makeGetSlicedText(parentText);
-      const cloneNodeWithData = makeCloneNodeWithData(parentEl);
+      const cloneNodeWithData = makeCloneNodeWithData(parentElement);
 
-      const frag = document.createDocumentFragment();
-      const newSelectedNode = cloneNodeWithData(selectedText, finalStyles);
+      const newSelectedNode = cloneNodeWithData(selectedText, computedStyle);
 
-      if (startOffset == 0) {
-        const rightNode = cloneNodeWithData(
-          getSlicedText(endOffset),
-          parentStyle
-        );
+      replaceElWith(parentElement, startOffset, endOffset, newSelectedNode)
 
-        frag.append(newSelectedNode, rightNode);
-      } else if (endOffset == parentText.length) {
-        const leftNode = cloneNodeWithData(
-          getSlicedText(0, startOffset),
-          parentStyle
-        );
-
-        frag.append(leftNode, newSelectedNode);
-      } else {
-        const leftNode = cloneNodeWithData(
-          getSlicedText(0, startOffset),
-          parentStyle
-        );
-        const rightNode = cloneNodeWithData(
-          getSlicedText(endOffset),
-          parentStyle
-        );
-
-        frag.append(leftNode, newSelectedNode, rightNode);
-      }
-
-      parentEl.replaceWith(frag);
       range.selectNodeContents(newSelectedNode.firstChild!);
       return;
     }
@@ -482,17 +460,16 @@ export function TextSelectionProvider({
     const {
       startOffset,
       endOffset,
-      startContainer: { parentElement: parentEl },
+      startContainer: { parentElement },
     } = range;
 
-    if (!parentEl) return;
+    if (!parentElement) return;
 
-    const parentText = parentEl.textContent || "";
-    const parentStyle = parentEl.getAttribute("style") || "";
+    const parentText = parentElement.textContent || "";
+    const parentStyle = parentElement.getAttribute("style") || "";
     const onRemoveStyle = FORMATTING_STYLE[formatting][0];
 
-    const getSlicedText = makeGetSlicedText(parentText);
-    const selectedText = getSlicedText(startOffset, endOffset);
+    const selectedText = selection.toString();
 
     let newStyle = parentStyle.replace(onRemoveStyle, "");
     if (newStyle.length == parentStyle.length)
@@ -500,60 +477,54 @@ export function TextSelectionProvider({
 
     if (parentText == selectedText) {
       if (newStyle) {
-        parentEl.setAttribute("style", newStyle);
+        parentElement.setAttribute("style", newStyle);
         return;
       }
 
       const textNode = document.createTextNode(selection.toString());
-      parentEl.replaceWith(textNode);
+      parentElement.replaceWith(textNode);
       range.selectNodeContents(textNode);
       return;
     }
 
-    const cloneNodeWithData = makeCloneNodeWithData(parentEl);
+    const cloneNodeWithData = makeCloneNodeWithData(parentElement);
 
-    const createNode = (text: string) => {
-      if (newStyle) return cloneNodeWithData(selectedText, newStyle);
-      return document.createTextNode(text);
-    };
+    const selectedNode = newStyle ?
+      cloneNodeWithData(selectedText, newStyle)
+      : document.createTextNode(selectedText);
 
-    const frag = document.createDocumentFragment();
-    const selectedNode = createNode(selectedText);
+    replaceElWith(parentElement, startOffset, endOffset, selectedNode)
 
-    if (startOffset == 0) {
-      const rightSpan = cloneNodeWithData(
-        getSlicedText(endOffset),
-        parentStyle
-      );
-
-      frag.append(selectedNode, rightSpan);
-    } else if (endOffset == parentText.length) {
-      const leftSpan = cloneNodeWithData(
-        getSlicedText(0, startOffset),
-        parentStyle
-      );
-
-      frag.append(leftSpan, selectedNode);
-    } else {
-      const leftSpan = cloneNodeWithData(
-        getSlicedText(0, startOffset),
-        parentStyle
-      );
-      const rightSpan = cloneNodeWithData(
-        getSlicedText(endOffset),
-        parentStyle
-      );
-
-      frag.append(leftSpan, selectedNode, rightSpan);
-    }
-
-    parentEl.replaceWith(frag);
     range.selectNodeContents(
       selectedNode.nodeType == Node.ELEMENT_NODE
         ? selectedNode.firstChild!
         : selectedNode
     );
   };
+
+  const replaceElWith = (el: HTMLElement, startOffset: number, endOffset: number, ...nodes: Node[]) => {
+    console.log(el)
+    console.log('nodes')
+    nodes.forEach(n => console.log(n))
+
+    const parentText = el.textContent;
+    if (startOffset == 0)
+      return el.before(...nodes);
+    if (endOffset >= parentText.length)
+      return el.after(...nodes);
+    const parentStyle = el.getAttribute("style") || "";
+    const cloneNodeWithData = makeCloneNodeWithData(el)
+    const leftNode = cloneNodeWithData(
+      parentText.substring(0, startOffset),
+      parentStyle
+    );
+    const rightNode = cloneNodeWithData(
+      parentText.substring(endOffset),
+      parentStyle
+    );
+    el.replaceWith(leftNode, ...nodes, rightNode);
+
+  }
 
   const getElAttrValue = (node: Node, attr: string) =>
     (node as HTMLElement).getAttribute(attr) || "";
@@ -572,15 +543,13 @@ export function TextSelectionProvider({
       return nodeClone;
     };
 
-  const makeGetSlicedText =
-    (text: string) => (startIndex?: number, endIndex?: number) =>
-      text.slice(startIndex, endIndex);
-
   return (
     <TextSelectionCtx.Provider
       value={{
         onHideFActionMenuListener,
         inputIdRef,
+        mergeInputChildrenByFormattingStyle,
+        replaceElWith,
         defineInputInlineLinkHandlers,
         showTextFormattingActionMenu,
         selectedRange,
