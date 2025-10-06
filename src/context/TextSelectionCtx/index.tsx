@@ -503,15 +503,13 @@ export function TextSelectionProvider({
   };
 
   const replaceElWith = (el: HTMLElement, startOffset: number, endOffset: number, ...nodes: Node[]) => {
-    console.log(el)
-    console.log('nodes')
-    nodes.forEach(n => console.log(n))
-
     const parentText = el.textContent;
     if (startOffset == 0)
       return el.before(...nodes);
-    if (endOffset >= parentText.length)
+    if (parentText && endOffset >= parentText.length)
       return el.after(...nodes);
+    if (!parentText)
+      return el.replaceWith(...nodes);
     const parentStyle = el.getAttribute("style") || "";
     const cloneNodeWithData = makeCloneNodeWithData(el)
     const leftNode = cloneNodeWithData(

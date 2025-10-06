@@ -3,6 +3,8 @@ import { authAdmin } from "@/lib/configs/firebase-admin";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
+// TODO: refresh token
+
 export async function POST(req: Request) {
   const { idToken /*csrfToken*/ } = (await req.json()) as { idToken: string };
 
